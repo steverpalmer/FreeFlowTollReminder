@@ -1,0 +1,6 @@
+TODO: Get the app running on my phone
+TODO: Ensure the initialization sequence is correct
+TODO: Sort out the Geofence triggers
+TODO: Worry about calendar duplicates
+TODO: Default calendar
+TODO: Worry about restart while on the bridge

@@ -1,12 +1,14 @@
 package uk.me.srpalmer.freeflowtollreminder
 // Copyright 2019 Steve Palmer
 
-import android.app.PendingIntent
-import android.app.Service
+import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
+import android.support.v4.app.NotificationCompat
 import android.support.v4.content.ContextCompat
 import com.google.android.gms.location.*
 import mu.KotlinLogging
@@ -37,19 +39,53 @@ class MainService : Service() {
     fun unsetCalendarId() = calendarUpdater.unsetCalendarId()
     fun addReminder(name: String) = calendarUpdater.addReminder(name)
 
+    private lateinit var notification: Notification
+    private val notificationId = 666
+
     override fun onCreate() {
         logger.info { "onCreate() started" }
 
         // Notification Stuff
-        // var notificationBuilder = Notification.Builder(this, CHANNEL_ID)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            logger.info { "register notification channel" }
+            val notificationChannel = NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.channel_name),
+                NotificationManager.IMPORTANCE_DEFAULT).apply {
+                enableVibration(true)
+                setShowBadge(true)
+                enableLights(true)
+                description = getString(R.string.channel_description)
+            }
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
 
-        // Calendar Stuff
+        logger.info { "create pending intent" }
+        val notificationIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }, 0)
+
+        logger.info { "create notification builder" }
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
+            setSmallIcon(R.mipmap.toll_launcher)
+            setContentTitle("Free Flow Toll Reminder")
+            setContentText("...")
+            priority = NotificationCompat.PRIORITY_DEFAULT
+            setContentIntent(notificationIntent)
+        }
+
+        logger.info { "startForeground" }
+        startForeground(notificationId, notificationBuilder.build())
+
+        logger.info { "Calender Stuff" }
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to update calendar" }
         else
             model.attach(calendarUpdater)
 
-        // Geofence Stuff
+
+        logger.info { "Geofence Stuff" }
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to access fine location" }
         else {
@@ -132,5 +168,9 @@ class MainService : Service() {
         geofencingClient?.removeGeofences(geofencePendingIntent)
         model.detach(calendarUpdater)
         logger.error { "onDestroy() started" }
+    }
+
+    companion object {
+        const val CHANNEL_ID = "freeflowtollreminder.srpalmer.me.uk.CHANNEL_ID"
     }
 }

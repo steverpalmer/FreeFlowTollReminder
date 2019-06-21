@@ -75,7 +75,8 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         logger.info { "onCreate(...) started" }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        startService(Intent(this, MainService::class.java))
+        // startService(Intent(this, MainService::class.java))
+        startForegroundService(Intent(this, MainService::class.java))
         addReminderButton.setOnClickListener {
             logger.info { "addReminderButton.onClick(...) started" }
             service?.addReminder("Test")

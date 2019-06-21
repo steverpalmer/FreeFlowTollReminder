@@ -1,6 +1,6 @@
+TODO: Use Foreground Service
 TODO: Get the app running on my phone
-TODO: Ensure the initialization sequence is correct
-TODO: Sort out the Geofence triggers
+TODO: Load Geofence details from config file
 TODO: Worry about calendar duplicates
 TODO: Default calendar
 TODO: Worry about restart while on the bridge

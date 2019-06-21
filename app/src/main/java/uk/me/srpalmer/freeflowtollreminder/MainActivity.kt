@@ -5,10 +5,12 @@ import android.content.Context
 import android.content.Intent
 import kotlinx.android.synthetic.main.activity_main.*
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.CalendarContract
+import android.support.v4.content.ContextCompat
 import android.view.View
 import android.widget.AdapterView
 import android.widget.SimpleCursorAdapter
@@ -78,13 +80,21 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
             service?.addReminder("Test")
             logger.info { "addReminderButton.onClick(...) stopped" }
         }
+
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR)
+            != PackageManager.PERMISSION_GRANTED)
+            logger.error { "Don't have permission to read calendar" }
+        else
+            calendarSelection.onItemSelectedListener = CalendarSelector()
+
+        logger.info { "onCreate(...) stopped" }
     }
 
     private val modelObserver = object: ModelObserver {
 
         override fun onTollRoadArrival(name: String) {
             logger.info { "onTollRoadArrival($name) started" }
-            statusDisplay.text = "Crossing $name"
+            statusDisplay.text = name
             logger.info { "onTollRoadArrival(...) stopped" }
         }
 

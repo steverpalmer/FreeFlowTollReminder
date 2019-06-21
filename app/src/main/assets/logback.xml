@@ -1,3 +1,4 @@
+<!-- Copyright 2019 Steve Palmer -->
 <configuration>
   <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
     <tagEncoder>

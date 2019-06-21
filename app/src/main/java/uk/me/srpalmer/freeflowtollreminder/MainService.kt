@@ -1,4 +1,5 @@
 package uk.me.srpalmer.freeflowtollreminder
+// Copyright 2019 Steve Palmer
 
 import android.app.PendingIntent
 import android.app.Service

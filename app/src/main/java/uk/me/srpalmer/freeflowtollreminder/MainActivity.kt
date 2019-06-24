@@ -58,15 +58,17 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         }
 
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            logger.info { "CalendarSelector.onItemSelected(_, $position, $id) called" }
+            logger.info { "CalendarSelector.onItemSelected(_, $position, $id) started" }
             service?.calendarId = id
             addReminderButton.visibility = View.VISIBLE
+            logger.info { "CalendarSelector.onItemSelected(_, $position, $id) stopped" }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
-            logger.info { "CalendarSelector.onItemSelected(...) called" }
+            logger.info { "CalendarSelector.onItemSelected(...) started" }
             service?.unsetCalendarId()
             addReminderButton.visibility = View.INVISIBLE
+            logger.info { "CalendarSelector.onItemSelected(...) stopped" }
         }
 
     }
@@ -75,7 +77,6 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         logger.info { "onCreate(...) started" }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // startService(Intent(this, MainService::class.java))
         startForegroundService(Intent(this, MainService::class.java))
         addReminderButton.setOnClickListener {
             logger.info { "addReminderButton.onClick(...) started" }

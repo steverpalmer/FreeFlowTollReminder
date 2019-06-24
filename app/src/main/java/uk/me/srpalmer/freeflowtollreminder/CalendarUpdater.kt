@@ -25,7 +25,7 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
         calendarId = CALENDAR_ID_UNDEFINED
     }
 
-    private val durationMillis = 10 * 60 * 1_000
+    private val durationMillis = 10 * 60 * 1_000  // TODO: Configuration option
 
     private val timeZone = TimeZone.getTimeZone("Europe/London")
 
@@ -49,7 +49,7 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
                 put(CalendarContract.Events.TITLE, "Pay $name toll")
                 put(CalendarContract.Events.CALENDAR_ID, calendarId)
                 put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.id)
-                // put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
+                // TODO: private ot note?  put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
                 put(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_TENTATIVE)
             }
             val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)

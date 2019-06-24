@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
 import android.support.v4.content.ContextCompat
@@ -39,43 +38,35 @@ class MainService : Service() {
     fun unsetCalendarId() = calendarUpdater.unsetCalendarId()
     fun addReminder(name: String) = calendarUpdater.addReminder(name)
 
-    private lateinit var notification: Notification
-    private val notificationId = 666
+    private val notificationId = 666  // TODO: check what numbers should be used
 
     override fun onCreate() {
         logger.info { "onCreate() started" }
 
-        // Notification Stuff
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            logger.info { "register notification channel" }
-            val notificationChannel = NotificationChannel(
-                CHANNEL_ID,
-                getString(R.string.channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT).apply {
-                enableVibration(true)
-                setShowBadge(true)
-                enableLights(true)
-                description = getString(R.string.channel_description)
-            }
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(notificationChannel)
+        logger.info { "Notification Stuff" }
+        val notificationChannel = NotificationChannel(
+            CHANNEL_ID,
+            getString(R.string.channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT).apply {
+            enableVibration(true)
+            setShowBadge(true)
+            enableLights(true)
+            description = getString(R.string.channel_description)
         }
-
-        logger.info { "create pending intent" }
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(notificationChannel)
         val notificationIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }, 0)
-
-        logger.info { "create notification builder" }
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
             setSmallIcon(R.mipmap.toll_launcher)
             setContentTitle("Free Flow Toll Reminder")
-            setContentText("...")
+            setContentText("Monitor when you use Toll road and create a reminder to pay")
             priority = NotificationCompat.PRIORITY_DEFAULT
             setContentIntent(notificationIntent)
         }
 
-        logger.info { "startForeground" }
+        logger.info { "Promote to Foreground" }
         startForeground(notificationId, notificationBuilder.build())
 
         logger.info { "Calender Stuff" }

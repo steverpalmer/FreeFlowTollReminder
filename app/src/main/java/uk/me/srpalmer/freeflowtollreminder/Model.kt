@@ -81,6 +81,7 @@ class Model (context: Context) {
             val documentBuilderFactory = DocumentBuilderFactory.newInstance()
             val documentBuilder = documentBuilderFactory.newDocumentBuilder()
             val doc = documentBuilder.parse(xmlStream)
+            xmlStream.close()
             val xPathFactory = XPathFactory.newInstance()
             val xPath = xPathFactory.newXPath()
             val tollRoadsElements = xPath.evaluate("/configuration/toll_roads/toll_road", doc, XPathConstants.NODESET) as NodeList

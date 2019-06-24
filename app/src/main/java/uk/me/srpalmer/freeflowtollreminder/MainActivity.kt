@@ -14,7 +14,7 @@ import android.provider.CalendarContract
 import android.support.v4.content.ContextCompat
 import android.view.View
 import android.widget.AdapterView
-import android.widget.SimpleCursorAdapter
+import android.widget.ArrayAdapter
 import mu.KotlinLogging
 
 class MainActivity : ServiceConnection, AppCompatActivity() {
@@ -27,33 +27,39 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     var service: MainService? = null
 
+    val calendarList: List<Pair<CalendarId, String>> by lazy {
+        logger.info { "calendarList Construction started" }
+        val cursor = contentResolver.query(
+            CalendarContract.Calendars.CONTENT_URI,
+            arrayOf(
+                CalendarContract.Calendars._ID,
+                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME),
+            null,
+            null,
+            null
+        ) ?: throw Exception("failed to access calendar")
+        val list: MutableList<Pair<CalendarId, String>> = mutableListOf()
+        if (cursor.moveToFirst())
+        {
+            do {
+                list.add(Pair(cursor.getLong(0), cursor.getString(1)))
+            } while (cursor.moveToNext())
+            cursor.close()
+        }
+        logger.info { "calendarList Construction stopped" }
+        list
+    }
+
     inner class CalendarSelector: AdapterView.OnItemSelectedListener {
 
         init {
             logger.info { "CalendarSelector Construction started" }
             calendarSelection.visibility = View.INVISIBLE
-            val cursor = contentResolver.query(
-                CalendarContract.Calendars.CONTENT_URI,
-                arrayOf(
-                    CalendarContract.Calendars._ID,
-                    CalendarContract.Calendars.CALENDAR_DISPLAY_NAME),
-                null,
-                null,
-                "${CalendarContract.Calendars._ID} DESC")
-            when (cursor?.count) {
-                null -> logger.error { "null calendarCursor" }
-                0 -> logger.error { "no calendars found" }
-                else -> {
-                    calendarSelection.adapter = SimpleCursorAdapter(
-                        this@MainActivity,
-                        android.R.layout.simple_spinner_item,
-                        cursor,
-                        arrayOf(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME),
-                        IntArray(1) { android.R.id.text1 },
-                        0
-                    )
-                }
-            }
+            val calendarNameArray = Array(calendarList.size) { i -> calendarList[i].second }
+            calendarSelection.adapter = ArrayAdapter(
+                this@MainActivity,
+                android.R.layout.simple_spinner_item,
+                calendarNameArray)
             logger.info { "CalendarSelector Construction stopped" }
         }
 
@@ -66,7 +72,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
             logger.info { "CalendarSelector.onItemSelected(...) started" }
-            service?.unsetCalendarId()
+            service?.calendarId = CALENDAR_ID_UNDEFINED
             addReminderButton.visibility = View.INVISIBLE
             logger.info { "CalendarSelector.onItemSelected(...) stopped" }
         }
@@ -80,7 +86,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         startForegroundService(Intent(this, MainService::class.java))
         addReminderButton.setOnClickListener {
             logger.info { "addReminderButton.onClick(...) started" }
-            service?.addReminder("Test")
+            service?.addReminder("Test")  // TODO: get a name from the model
             logger.info { "addReminderButton.onClick(...) stopped" }
         }
 
@@ -126,6 +132,15 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         val binder = iBinder as MainService.MainServiceBinder
         service = binder.getService()
         service?.attach(modelObserver)
+        logger.info { "searching for calendar" }
+        var pos = 0
+        for ((id, _) in calendarList) {
+            pos++
+            if (id == service?.calendarId) {
+                calendarSelection.setSelection(pos)
+                break
+            }
+        }
         calendarSelection.visibility = View.VISIBLE
         statusDisplay.text = ""
         logger.info { "onServiceConnected(...) stopped" }

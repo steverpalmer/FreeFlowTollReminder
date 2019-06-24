@@ -21,21 +21,20 @@ class MainService : Service() {
 
     private val logger = KotlinLogging.logger {}
 
-    init {
-        logger.info { "Constructor" }
+    private val sharedPreferences by lazy {
+        getSharedPreferences(SHARED_PREFERENCES_FILE_NAME, Context.MODE_PRIVATE)
     }
 
     private val model = Model(this)
     fun attach(modelObserver: ModelObserver) = model.attach(modelObserver)
     fun detach(modelObserver: ModelObserver) = model.detach(modelObserver)
 
-    private val calendarUpdater by lazy { CalendarUpdater(contentResolver) }
+    private lateinit var calendarUpdater: CalendarUpdater
     var calendarId
         get () = calendarUpdater.calendarId
         set (value) {
             calendarUpdater.calendarId = value
         }
-    fun unsetCalendarId() = calendarUpdater.unsetCalendarId()
     fun addReminder(name: String) = calendarUpdater.addReminder(name)
 
     private val notificationId = 666  // TODO: check what numbers should be used
@@ -70,6 +69,8 @@ class MainService : Service() {
         startForeground(notificationId, notificationBuilder.build())
 
         logger.info { "Calender Stuff" }
+        calendarUpdater = CalendarUpdater(contentResolver)
+        calendarUpdater.onCreate(sharedPreferences)
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to update calendar" }
         else
@@ -155,13 +156,18 @@ class MainService : Service() {
     }
 
     override fun onDestroy() {
-        logger.error { "onDestroy() started" }
+        logger.info { "onDestroy() started" }
         geofencingClient?.removeGeofences(geofencePendingIntent)
         model.detach(calendarUpdater)
-        logger.error { "onDestroy() started" }
+        sharedPreferences.edit().apply {
+            calendarUpdater.onDestroy(this)
+            commit()
+        }
+        logger.info { "onDestroy() started" }
     }
 
     companion object {
-        const val CHANNEL_ID = "freeflowtollreminder.srpalmer.me.uk.CHANNEL_ID"
+        const val CHANNEL_ID = "uk.me.srpalmer.freeflowtollreminder.CHANNEL_ID"
+        const val SHARED_PREFERENCES_FILE_NAME = "uk.me.srpalmer.freeflowtollreminder.MODEL_PREFERENCES"
     }
 }

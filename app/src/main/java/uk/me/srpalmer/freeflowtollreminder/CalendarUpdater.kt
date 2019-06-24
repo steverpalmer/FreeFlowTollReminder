@@ -3,13 +3,14 @@ package uk.me.srpalmer.freeflowtollreminder
 
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.SharedPreferences
 import android.provider.CalendarContract
 import mu.KotlinLogging
 import java.util.*
 
 typealias CalendarId = Long
 
-private const val CALENDAR_ID_UNDEFINED: CalendarId = 0  // calendars are numbers from 1 ..
+const val CALENDAR_ID_UNDEFINED: CalendarId = 0  // calendars are numbers from 1 ..
 
 class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObserver {
 
@@ -17,8 +18,8 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
 
     var calendarId: CalendarId = CALENDAR_ID_UNDEFINED
 
-    fun unsetCalendarId() {
-        calendarId = CALENDAR_ID_UNDEFINED
+    fun onCreate(sharedPreferences: SharedPreferences) {
+        calendarId = sharedPreferences.getLong(calendarIdKey, CALENDAR_ID_UNDEFINED)
     }
 
     private val durationMillis = 10 * 60 * 1_000  // TODO: Configuration option
@@ -45,7 +46,7 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
                 put(CalendarContract.Events.TITLE, "Pay $name toll")
                 put(CalendarContract.Events.CALENDAR_ID, calendarId)
                 put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.id)
-                // TODO: private ot note?  put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
+                // TODO: private or not?  put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
                 put(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_TENTATIVE)
             }
             val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
@@ -56,4 +57,12 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
     }
 
     override fun onTollRoadDeparture(name: String) = addReminder(name)
+
+    fun onDestroy(sharedPreferencesEditor: SharedPreferences.Editor) {
+        sharedPreferencesEditor.putLong(calendarIdKey, calendarId)
+    }
+
+    companion object {
+        private const val calendarIdKey = "CalendarUpdater.calendarId"
+    }
 }

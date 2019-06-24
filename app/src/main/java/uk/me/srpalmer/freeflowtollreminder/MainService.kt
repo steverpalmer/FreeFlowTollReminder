@@ -25,7 +25,7 @@ class MainService : Service() {
         logger.info { "Constructor" }
     }
 
-    private val model = Model()
+    private val model = Model(this)
     fun attach(modelObserver: ModelObserver) = model.attach(modelObserver)
     fun detach(modelObserver: ModelObserver) = model.detach(modelObserver)
 

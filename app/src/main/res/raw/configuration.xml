@@ -10,7 +10,7 @@
             </gpl:GPL_CoordinateTuple>
             <proximity_meters>50.0</proximity_meters>
         </toll_road>
-        <!-- toll_road>
+        <toll_road>
             <name>Mersey Gateway Bridge</name>
             <gpl:GPL_CoordinateTuple xmlns:gpl="http://www.isotc211.org/gpl">
                 <gpl:tuple srsName="urn:ogc:def:crs:EPSG:6.6:4326">
@@ -18,15 +18,15 @@
                 </gpl:tuple>
             </gpl:GPL_CoordinateTuple>
             <proximity_meters>50.0</proximity_meters>
-        </toll_road -->
-        <!-- toll_road>
+        </toll_road>
+        <toll_road>
             <name>Silver Jubilee Bridge</name>
             <gpl:GPL_CoordinateTuple xmlns:gpl="http://www.isotc211.org/gpl">
                 <gpl:tuple srsName="urn:ogc:def:crs:EPSG:6.6:4326">
                     53.346391 -2.737918
                 </gpl:tuple>
             </gpl:GPL_CoordinateTuple>
-            <proximity>_meters50.0</proximity_meters>
-        </toll_road -->
+            <proximity_meters>50.0</proximity_meters>
+        </toll_road>
     </toll_roads>
 </configuration>

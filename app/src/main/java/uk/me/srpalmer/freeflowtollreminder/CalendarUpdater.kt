@@ -15,10 +15,6 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
 
     private val logger = KotlinLogging.logger {}
 
-    init {
-        logger.info { "Constructor" }
-    }
-
     var calendarId: CalendarId = CALENDAR_ID_UNDEFINED
 
     fun unsetCalendarId() {

@@ -27,8 +27,9 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     var service: MainService? = null
 
-    val calendarList: List<Pair<CalendarId, String>> by lazy {
-        logger.info { "calendarList Construction started" }
+    data class CalendarInfo (val id: CalendarId, val name: String)
+    val calendarInfoList: List<CalendarInfo> by lazy {
+        logger.info { "calendarInfoList Construction started" }
         val cursor = contentResolver.query(
             CalendarContract.Calendars.CONTENT_URI,
             arrayOf(
@@ -38,15 +39,15 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
             null,
             null
         ) ?: throw Exception("failed to access calendar")
-        val list: MutableList<Pair<CalendarId, String>> = mutableListOf()
+        val list: MutableList<CalendarInfo> = mutableListOf()
         if (cursor.moveToFirst())
         {
             do {
-                list.add(Pair(cursor.getLong(0), cursor.getString(1)))
+                list.add(CalendarInfo(cursor.getLong(0), cursor.getString(1)))
             } while (cursor.moveToNext())
             cursor.close()
         }
-        logger.info { "calendarList Construction stopped" }
+        logger.info { "calendarInfoList Construction stopped" }
         list
     }
 
@@ -55,7 +56,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         init {
             logger.info { "CalendarSelector Construction started" }
             calendarSelection.visibility = View.INVISIBLE
-            val calendarNameArray = Array(calendarList.size) { i -> calendarList[i].second }
+            val calendarNameArray = Array(calendarInfoList.size) { i -> calendarInfoList[i].name }
             calendarSelection.adapter = ArrayAdapter(
                 this@MainActivity,
                 android.R.layout.simple_spinner_item,
@@ -64,10 +65,10 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         }
 
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            logger.info { "CalendarSelector.onItemSelected(_, $position, $id) started" }
-            service?.calendarId = id
+            logger.info { "CalendarSelector.onItemSelected(_, $position, _) started" }
+            service?.calendarId = calendarInfoList[position].id
             addReminderButton.visibility = View.VISIBLE
-            logger.info { "CalendarSelector.onItemSelected(_, $position, $id) stopped" }
+            logger.info { "CalendarSelector.onItemSelected(_, $position, _) stopped" }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -133,11 +134,11 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         service = binder.getService()
         service?.attach(modelObserver)
         logger.info { "searching for calendar" }
-        var pos = 0
-        for ((id, _) in calendarList) {
-            pos++
+        var position = -1
+        for ((id, _) in calendarInfoList) {
+            position++
             if (id == service?.calendarId) {
-                calendarSelection.setSelection(pos)
+                calendarSelection.setSelection(position)
                 break
             }
         }

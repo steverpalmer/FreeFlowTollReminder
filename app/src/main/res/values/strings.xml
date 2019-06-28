@@ -3,7 +3,7 @@
     <string name="app_name">FreeFlowTollReminder</string>
     <string name="waiting">…</string>
     <string name="calendarLabel">Calendar</string>
-    <string name="addReminderButton">Add Reminder</string>
+    <string name="finishButton">Finish</string>
     <string name="channel_name">Free Flow Toll Reminder Channel</string>
     <string name="channel_description">Free Flow Toll Reminder Channel Description</string>
 </resources>

@@ -77,8 +77,8 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
         logger.info { "putEvent(...) added event: ${uri?.lastPathSegment}" }
     }
 
-    fun addReminder(name: String) {
-        logger.info { "addReminder($name) started" }
+    override fun onTollRoadDeparture(name: String) {
+        logger.info { "onTollRoadDeparture($name) started" }
         if (calendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
         else {
@@ -97,13 +97,13 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
             else
                 putEvent(title, startMillis)
         }
-        logger.info { "addReminder(...) stopped" }
+        logger.info { "onTollRoadDeparture(...) stopped" }
     }
 
-    override fun onTollRoadDeparture(name: String) = addReminder(name)
-
     fun onDestroy(sharedPreferencesEditor: SharedPreferences.Editor) {
+        logger.info { "onDestroy(...) started" }
         sharedPreferencesEditor.putLong(calendarIdKey, calendarId)
+        logger.info { "onDestroy(...) stopped" }
     }
 
     companion object {

@@ -67,14 +67,12 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
             logger.info { "CalendarSelector.onItemSelected(_, $position, _) started" }
             service?.calendarId = calendarInfoList[position].id
-            addReminderButton.visibility = View.VISIBLE
             logger.info { "CalendarSelector.onItemSelected(_, $position, _) stopped" }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
             logger.info { "CalendarSelector.onItemSelected(...) started" }
             service?.calendarId = CALENDAR_ID_UNDEFINED
-            addReminderButton.visibility = View.INVISIBLE
             logger.info { "CalendarSelector.onItemSelected(...) stopped" }
         }
 
@@ -85,10 +83,10 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         startForegroundService(Intent(this, MainService::class.java))
-        addReminderButton.setOnClickListener {
-            logger.info { "addReminderButton.onClick(...) started" }
-            service?.addReminder("Test")  // TODO: get a name from the model
-            logger.info { "addReminderButton.onClick(...) stopped" }
+        finishButton.setOnClickListener {
+            logger.info { "finishButton.onClick(...) started" }
+            onFinishRequest()
+            logger.info { "finishButton.onClick(...) stopped" }
         }
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR)
@@ -168,5 +166,12 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         logger.info { "onDestroy() started" }
         super.onDestroy()
         logger.info { "onDestroy() stopped" }
+    }
+
+    private fun onFinishRequest() {
+        logger.info { "onFinishRequest() started" }
+        service?.onFinishRequest()
+        finish()
+        logger.info { "onFinishRequest() stopped" }
     }
 }

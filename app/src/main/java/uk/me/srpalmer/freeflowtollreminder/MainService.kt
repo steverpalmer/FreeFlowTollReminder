@@ -35,7 +35,6 @@ class MainService : Service() {
         set (value) {
             calendarUpdater.calendarId = value
         }
-    fun addReminder(name: String) = calendarUpdater.addReminder(name)
 
     private val notificationId = 666  // TODO: check what numbers should be used
 
@@ -163,7 +162,14 @@ class MainService : Service() {
             calendarUpdater.onDestroy(this)
             commit()
         }
-        logger.info { "onDestroy() started" }
+        logger.info { "onDestroy() stopped" }
+    }
+
+    fun onFinishRequest() {
+        logger.info { "onFinishRequest() started" }
+        stopForeground(true)
+        stopSelf()
+        logger.info { "onFinishRequest() stopped" }
     }
 
     companion object {

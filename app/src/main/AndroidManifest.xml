@@ -9,9 +9,9 @@
 
     <application
             android:allowBackup="false"
-            android:icon="@mipmap/toll_launcher"
+            android:icon="@mipmap/tollroad_launcher"
             android:label="@string/app_name"
-            android:roundIcon="@mipmap/toll_launcher_round"
+            android:roundIcon="@mipmap/tollroad_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
         <service

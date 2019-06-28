@@ -39,9 +39,9 @@ class MainService : Service() {
     private val notificationId = 666  // TODO: check what numbers should be used
 
     override fun onCreate() {
-        logger.info { "onCreate() started" }
+        logger.trace { "onCreate() started" }
 
-        logger.info { "Notification Stuff" }
+        logger.trace { "Notification Stuff" }
         val notificationChannel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.channel_name),
@@ -64,10 +64,10 @@ class MainService : Service() {
             setContentIntent(notificationIntent)
         }
 
-        logger.info { "Promote to Foreground" }
+        logger.trace { "Promote to Foreground" }
         startForeground(notificationId, notificationBuilder.build())
 
-        logger.info { "Calender Stuff" }
+        logger.trace { "Calender Stuff" }
         calendarUpdater = CalendarUpdater(contentResolver)
         calendarUpdater.onCreate(sharedPreferences)
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
@@ -76,7 +76,7 @@ class MainService : Service() {
             model.attach(calendarUpdater)
 
 
-        logger.info { "Geofence Stuff" }
+        logger.trace { "Geofence Stuff" }
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to access fine location" }
         else {
@@ -105,7 +105,7 @@ class MainService : Service() {
             }
         }
 
-        logger.info { "onCreate() stopped" }
+        logger.trace { "onCreate() stopped" }
     }
 
     private var geofencingClient: GeofencingClient? = null
@@ -116,24 +116,24 @@ class MainService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        logger.info { "onStartCommand($intent, $flags, $startId) started" }
+        logger.trace { "onStartCommand($intent, $flags, $startId) started" }
         if (intent != null) {
             val geofencingEvent = GeofencingEvent.fromIntent(intent)
             if (geofencingEvent.hasError()) {
                 logger.error { "Geofencing Error: ${geofencingEvent.errorCode}" }
             } else when (geofencingEvent.geofenceTransition) {
                 -1 -> {
-                    logger.info { "Service Start Intent" }
+                    logger.trace { "Service Start Intent" }
                 }
                 Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                    logger.info { "Geofence Enter Transition" }
+                    logger.trace { "Geofence Enter Transition" }
                     // Only expecting one, but loop anyway ...
                     for (geofence in geofencingEvent.triggeringGeofences) {
                         model.location = geofence.requestId
                     }
                 }
                 Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                    logger.info { "Geofence Exit Transition" }
+                    logger.trace { "Geofence Exit Transition" }
                     model.location = FREE_ROAD
                 }
                 else -> {
@@ -141,7 +141,7 @@ class MainService : Service() {
                 }
             }
         }
-        logger.info { "onStartCommand(...) stopped" }
+        logger.trace { "onStartCommand(...) stopped" }
         return START_NOT_STICKY
     }
 
@@ -150,26 +150,27 @@ class MainService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        logger.info { "onBind(...) called" }
+        logger.trace { "onBind(...) called" }
         return MainServiceBinder()
     }
 
     override fun onDestroy() {
-        logger.info { "onDestroy() started" }
+        logger.trace { "onDestroy() started" }
+        logger.info { "All geofences cleared" }
         geofencingClient?.removeGeofences(geofencePendingIntent)
         model.detach(calendarUpdater)
         sharedPreferences.edit().apply {
             calendarUpdater.onDestroy(this)
             commit()
         }
-        logger.info { "onDestroy() stopped" }
+        logger.trace { "onDestroy() stopped" }
     }
 
     fun onFinishRequest() {
-        logger.info { "onFinishRequest() started" }
+        logger.trace { "onFinishRequest() started" }
         stopForeground(true)
         stopSelf()
-        logger.info { "onFinishRequest() stopped" }
+        logger.trace { "onFinishRequest() stopped" }
     }
 
     companion object {

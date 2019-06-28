@@ -28,7 +28,7 @@ data class CircularRegion(
     private val logger = KotlinLogging.logger {}
 
     constructor(node: Node) : this("", 0.0, 0.0, 0.0f) {
-        logger.info { "XML constructor started" }
+        logger.trace { "XML constructor started" }
         val childNodes = node.childNodes
         val childNodesLength = childNodes.length
         for (i in 0 until childNodesLength) {
@@ -50,7 +50,7 @@ data class CircularRegion(
                 }
             }
         }
-        logger.info { "XML constructor stopped: ${toString()}" }
+        logger.trace { "XML constructor stopped: ${toString()}" }
     }
 
     companion object {
@@ -74,7 +74,7 @@ class Model (context: Context) {
     private val logger = KotlinLogging.logger {}
 
     val tollRoads: Map<String, CircularRegion> by lazy {
-        logger.info { "Initializing tollRoads" }
+        logger.trace { "Initializing tollRoads" }
         val result = HashMap<String, CircularRegion>()
         try {
             val xmlStream = context.resources.openRawResource(R.raw.configuration)
@@ -99,15 +99,16 @@ class Model (context: Context) {
         } catch (e: SAXException) {
             logger.error { e.message }
         }
+        logger.trace { "tollRoads Initialized" }
         result
     }
 
     private var observers = mutableSetOf<ModelObserver>()
 
     fun attach(modelObserver: ModelObserver) {
-        logger.info { "attach() started" }
+        logger.trace { "attach() started" }
         observers.add(modelObserver)
-        logger.info { "attach() stopped" }
+        logger.trace { "attach() stopped" }
     }
 
     fun detach(modelObserver: ModelObserver) {
@@ -118,7 +119,7 @@ class Model (context: Context) {
 
     var location: String by Delegates.observable(FREE_ROAD) {
             _, old, new ->
-        logger.info { "location notification started" }
+        logger.trace { "location notification started" }
         if (new != FREE_ROAD && new !in tollRoads)
             logger.error { "Unexpected toll location name: $new" }
         if (new == old)
@@ -129,7 +130,7 @@ class Model (context: Context) {
             if (new != FREE_ROAD)
                 observers.forEach { it.onTollRoadArrival(new) }
         }
-        logger.info { "location notification stopped" }
+        logger.trace { "location notification stopped" }
     }
 
 }

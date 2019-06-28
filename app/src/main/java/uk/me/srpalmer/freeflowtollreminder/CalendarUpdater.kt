@@ -30,7 +30,7 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
     private val timeZone = TimeZone.getTimeZone("Europe/London")
 
     private fun findEvent(title: String, startMillis: Long): EventId {
-        logger.info { "findEvent($title, $startMillis) started" }
+        logger.trace { "findEvent($title, $startMillis) started" }
         var result = EVENT_ID_UNDEFINED
         if (calendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
@@ -57,12 +57,12 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
                 cur.close()
             }
         }
-        logger.info { "findEvent(...) returns $result" }
+        logger.trace { "findEvent(...) returns $result" }
         return result
     }
 
     private fun putEvent(title: String, startMillis: Long) {
-        logger.info { "putEvent($title, $startMillis) started" }
+        logger.trace { "putEvent($title, $startMillis) started" }
         val endMillis = startMillis + durationMillis
         val values = ContentValues().apply {
             put(CalendarContract.Events.DTSTART, startMillis)
@@ -74,11 +74,11 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
             put(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_TENTATIVE)
         }
         val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-        logger.info { "putEvent(...) added event: ${uri?.lastPathSegment}" }
+        logger.trace { "putEvent(...) added event: ${uri?.lastPathSegment}" }
     }
 
     override fun onTollRoadDeparture(name: String) {
-        logger.info { "onTollRoadDeparture($name) started" }
+        logger.trace { "onTollRoadDeparture($name) started" }
         if (calendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
         else {
@@ -93,17 +93,17 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
             }
             val oldEventId = findEvent(title, startMillis)
             if (oldEventId != EVENT_ID_UNDEFINED)
-                logger.info { "Event already present: $oldEventId" }
+                logger.debug { "Event already present: $oldEventId" }
             else
                 putEvent(title, startMillis)
         }
-        logger.info { "onTollRoadDeparture(...) stopped" }
+        logger.trace { "onTollRoadDeparture(...) stopped" }
     }
 
     fun onDestroy(sharedPreferencesEditor: SharedPreferences.Editor) {
-        logger.info { "onDestroy(...) started" }
+        logger.trace { "onDestroy(...) started" }
         sharedPreferencesEditor.putLong(calendarIdKey, calendarId)
-        logger.info { "onDestroy(...) stopped" }
+        logger.trace { "onDestroy(...) stopped" }
     }
 
     companion object {

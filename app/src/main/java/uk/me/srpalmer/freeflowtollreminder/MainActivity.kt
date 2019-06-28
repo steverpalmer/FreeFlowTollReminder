@@ -21,15 +21,11 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     private val logger = KotlinLogging.logger {}
 
-    init {
-        logger.info { "Constructor" }
-    }
-
     var service: MainService? = null
 
     data class CalendarInfo (val id: CalendarId, val name: String)
     val calendarInfoList: List<CalendarInfo> by lazy {
-        logger.info { "calendarInfoList Construction started" }
+        logger.trace { "calendarInfoList Construction started" }
         val cursor = contentResolver.query(
             CalendarContract.Calendars.CONTENT_URI,
             arrayOf(
@@ -47,46 +43,46 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
             } while (cursor.moveToNext())
             cursor.close()
         }
-        logger.info { "calendarInfoList Construction stopped" }
+        logger.trace { "calendarInfoList Construction stopped" }
         list
     }
 
     inner class CalendarSelector: AdapterView.OnItemSelectedListener {
 
         init {
-            logger.info { "CalendarSelector Construction started" }
+            logger.trace { "CalendarSelector Construction started" }
             calendarSelection.visibility = View.INVISIBLE
             val calendarNameArray = Array(calendarInfoList.size) { i -> calendarInfoList[i].name }
             calendarSelection.adapter = ArrayAdapter(
                 this@MainActivity,
                 android.R.layout.simple_spinner_item,
                 calendarNameArray)
-            logger.info { "CalendarSelector Construction stopped" }
+            logger.trace { "CalendarSelector Construction stopped" }
         }
 
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            logger.info { "CalendarSelector.onItemSelected(_, $position, _) started" }
+            logger.trace { "CalendarSelector.onItemSelected(_, $position, _) started" }
             service?.calendarId = calendarInfoList[position].id
-            logger.info { "CalendarSelector.onItemSelected(_, $position, _) stopped" }
+            logger.trace { "CalendarSelector.onItemSelected(_, $position, _) stopped" }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
-            logger.info { "CalendarSelector.onItemSelected(...) started" }
+            logger.trace { "CalendarSelector.onItemSelected(...) started" }
             service?.calendarId = CALENDAR_ID_UNDEFINED
-            logger.info { "CalendarSelector.onItemSelected(...) stopped" }
+            logger.trace { "CalendarSelector.onItemSelected(...) stopped" }
         }
 
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        logger.info { "onCreate(...) started" }
+        logger.trace { "onCreate(...) started" }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         startForegroundService(Intent(this, MainService::class.java))
         finishButton.setOnClickListener {
-            logger.info { "finishButton.onClick(...) started" }
+            logger.trace { "finishButton.onClick(...) started" }
             onFinishRequest()
-            logger.info { "finishButton.onClick(...) stopped" }
+            logger.trace { "finishButton.onClick(...) stopped" }
         }
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR)
@@ -95,27 +91,27 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         else
             calendarSelection.onItemSelectedListener = CalendarSelector()
 
-        logger.info { "onCreate(...) stopped" }
+        logger.trace { "onCreate(...) stopped" }
     }
 
     private val modelObserver = object: ModelObserver {
 
         override fun onTollRoadArrival(name: String) {
-            logger.info { "onTollRoadArrival($name) started" }
+            logger.trace { "onTollRoadArrival($name) started" }
             statusDisplay.text = name
-            logger.info { "onTollRoadArrival(...) stopped" }
+            logger.trace { "onTollRoadArrival(...) stopped" }
         }
 
         override fun onTollRoadDeparture(name: String) {
-            logger.info { "onTollRoadDeparture($name) started" }
+            logger.trace { "onTollRoadDeparture($name) started" }
             statusDisplay.text = ""
-            logger.info { "onTollRoadDeparture(...) stopped" }
+            logger.trace { "onTollRoadDeparture(...) stopped" }
         }
 
     }
 
     override fun onStart() {
-        logger.info { "onStart(...) started" }
+        logger.trace { "onStart(...) started" }
         super.onStart()
         val success = bindService(
             Intent(this, MainService::class.java),
@@ -123,15 +119,15 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
             Context.BIND_AUTO_CREATE)
         if (!success)
             logger.error { "Failed to bind to service" }
-        logger.info { "onStart(...) stopped" }
+        logger.trace { "onStart(...) stopped" }
     }
 
     override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
-        logger.info { "onServiceConnected(...) started" }
+        logger.trace { "onServiceConnected(...) started" }
         val binder = iBinder as MainService.MainServiceBinder
         service = binder.getService()
         service?.attach(modelObserver)
-        logger.info { "searching for calendar" }
+        logger.trace { "searching for calendar" }
         var position = -1
         for ((id, _) in calendarInfoList) {
             position++
@@ -142,36 +138,36 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         }
         calendarSelection.visibility = View.VISIBLE
         statusDisplay.text = ""
-        logger.info { "onServiceConnected(...) stopped" }
+        logger.trace { "onServiceConnected(...) stopped" }
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
-        logger.info { "onServiceDisconnected(...) started" }
+        logger.trace { "onServiceDisconnected(...) started" }
         calendarSelection.visibility = View.INVISIBLE
         service?.detach(modelObserver)
         service = null
         statusDisplay.text = "..."
-        logger.info { "onServiceDisconnected(...) stopped" }
+        logger.trace { "onServiceDisconnected(...) stopped" }
     }
 
     override fun onStop() {
-        logger.info { "OnStop() started" }
+        logger.trace { "OnStop() started" }
         super.onStop()
         service?.detach(modelObserver)
         unbindService(this)
-        logger.info { "OnStop() stopped" }
+        logger.trace { "OnStop() stopped" }
     }
 
     override fun onDestroy() {
-        logger.info { "onDestroy() started" }
+        logger.trace { "onDestroy() started" }
         super.onDestroy()
-        logger.info { "onDestroy() stopped" }
+        logger.trace { "onDestroy() stopped" }
     }
 
     private fun onFinishRequest() {
-        logger.info { "onFinishRequest() started" }
+        logger.trace { "onFinishRequest() started" }
         service?.onFinishRequest()
         finish()
-        logger.info { "onFinishRequest() stopped" }
+        logger.trace { "onFinishRequest() stopped" }
     }
 }

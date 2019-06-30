@@ -4,24 +4,33 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>60</x>
-      <y>370</y>
-      <w>180</w>
-      <h>70</h>
+      <x>520</x>
+      <y>360</y>
+      <w>240</w>
+      <h>200</h>
     </coordinates>
-    <panel_attributes>type=actclass
-MainActivity
+    <panel_attributes>MainActivity
 --
 --
-onTollRoadArrival
-onTollRoadDeparture</panel_attributes>
+onCreate
+onStart
+onServiceConnected
+onServiceDisconnected
+onStop
+onDestroy
+onFinishRequest
+--
+Responsibilities
+-- Calendar selection
+-- Start and Stop MainService
+</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>320</x>
-      <y>170</y>
+      <x>850</x>
+      <y>90</y>
       <w>170</w>
       <h>70</h>
     </coordinates>
@@ -35,127 +44,245 @@ onTollRoadDeparture</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>350</x>
-      <y>370</y>
-      <w>100</w>
-      <h>60</h>
+      <x>790</x>
+      <y>360</y>
+      <w>340</w>
+      <h>140</h>
     </coordinates>
     <panel_attributes>Model
 --
-tollRoads
-useTollRoad
+tollRoads: Map&lt;String, CircularRegion&gt;
+location: String
+--
+--
+Responsibilities
+-- List of known toll roads and their location
+-- Record the usage of one of a known toll road
+-- Notify observers of usage of a toll road</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>920</x>
+      <y>150</y>
+      <w>100</w>
+      <h>230</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-&gt;
+observers
+m2=*</panel_attributes>
+    <additional_attributes>10.0;210.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>770</x>
+      <y>140</y>
+      <w>100</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>80.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>790</x>
+      <y>640</y>
+      <w>340</w>
+      <h>220</h>
+    </coordinates>
+    <panel_attributes>MainService
+--
+tollRoads: Map&lt;String, CircularRegion&gt;
+location: String
+calendarId: Long
+--
+onCreate
+onStartCommand
+onBind
+onDestroy
+onFinishRequest
+--
+Reponsibilities:
+-- Facade for Model and CalendarUpdater
+-- Detect usage of a known toll road</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>870</x>
+      <y>490</y>
+      <w>70</w>
+      <h>170</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-&gt;
+model</panel_attributes>
+    <additional_attributes>10.0;150.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1180</x>
+      <y>360</y>
+      <w>290</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>CalendarUpdater
+--
+calendarId: Long
+--
+onTollRoadDeparture
+--
+Responsibilities:
+-- Persist calendarId
+-- Add event with reminder to calendar
+-- Avoid publicate events
 </panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>390</x>
-      <y>230</y>
-      <w>100</w>
-      <h>160</h>
+      <x>990</x>
+      <y>150</y>
+      <w>290</w>
+      <h>230</h>
     </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;-&gt;
-observers
-m2=*</panel_attributes>
-    <additional_attributes>10.0;140.0;10.0;10.0</additional_attributes>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;270.0;210.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>140</x>
-      <y>230</y>
-      <w>220</w>
-      <h>160</h>
+      <x>720</x>
+      <y>550</y>
+      <w>120</w>
+      <h>110</h>
     </coordinates>
-    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
-    <additional_attributes>200.0;10.0;10.0;140.0</additional_attributes>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-&gt;
+service</panel_attributes>
+    <additional_attributes>10.0;10.0;90.0;90.0</additional_attributes>
   </element>
   <element>
-    <id>UMLClass</id>
+    <id>Relation</id>
     <coordinates>
-      <x>290</x>
-      <y>600</y>
-      <w>240</w>
-      <h>50</h>
+      <x>1080</x>
+      <y>490</y>
+      <w>210</w>
+      <h>170</h>
     </coordinates>
-    <panel_attributes>GeofenceTransitionService
---
---
-onStartCommand</panel_attributes>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-&gt;
+calendarUpdater</panel_attributes>
+    <additional_attributes>10.0;150.0;140.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>1200</x>
+      <y>750</y>
+      <w>230</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Copyright 2019 Steve Palmer</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>390</x>
-      <y>420</y>
-      <w>70</w>
-      <h>200</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-&gt;
-model</panel_attributes>
-    <additional_attributes>10.0;180.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>580</x>
-      <y>370</y>
-      <w>160</w>
-      <h>80</h>
+      <x>670</x>
+      <y>220</y>
+      <w>220</w>
+      <h>70</h>
     </coordinates>
-    <panel_attributes>CalendarUpdater
+    <panel_attributes>MainActivity.ModelObserver
 --
-calendarId
 --
-calendarsCursor
+onTollRoadArrival
 onTollRoadDeparture</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>460</x>
-      <y>230</y>
-      <w>220</w>
-      <h>160</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;10.0;200.0;140.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>140</x>
-      <y>430</y>
-      <w>190</w>
-      <h>190</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;-&gt;</panel_attributes>
-    <additional_attributes>10.0;10.0;170.0;170.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>480</x>
-      <y>440</y>
-      <w>200</w>
-      <h>180</h>
+      <x>690</x>
+      <y>280</y>
+      <w>170</w>
+      <h>100</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-&gt;
-calendarUpdater</panel_attributes>
-    <additional_attributes>10.0;160.0;180.0;10.0</additional_attributes>
+modelObserver</panel_attributes>
+    <additional_attributes>10.0;80.0;80.0;10.0</additional_attributes>
   </element>
   <element>
-    <id>UMLNote</id>
+    <id>UMLClass</id>
     <coordinates>
-      <x>50</x>
-      <y>90</y>
-      <w>230</w>
+      <x>480</x>
+      <y>210</y>
+      <w>160</w>
       <h>30</h>
     </coordinates>
-    <panel_attributes>Copyright 2019 Steve Palmer</panel_attributes>
+    <panel_attributes>/ServiceConnection/
+</panel_attributes>
     <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>610</x>
+      <y>230</y>
+      <w>30</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;130.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>950</x>
+      <y>540</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>/Service/
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>990</x>
+      <y>560</y>
+      <w>30</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>430</x>
+      <y>270</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>/AppCompatActivity/
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>540</x>
+      <y>290</y>
+      <w>30</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;70.0</additional_attributes>
   </element>
 </diagram>

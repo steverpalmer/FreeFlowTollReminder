@@ -7,10 +7,10 @@ flow toll road.
 
 The UK has introduced a "free flow toll road" with the [Mersey Gateway
 Bridge](http://www.merseygateway.co.uk/).  The bridge itself has no
-toll boths or anything to stop the free flow of traffic, but you need
+toll booths or anything to stop the free flow of traffic, but you need
 to remember to pay the tolls at the [Merseyflow
 website](https://www.merseyflow.co.uk/).  Unfortunately, after driving
-on for another hour or so, it is very easy to forget and so incurr a
+on for another hour or so, it is very easy to forget and so incur a
 penalty of £20.  I've designed this android app for my mobile that
 detects when I've crossed the toll road and adds an event with
 reminders to a calendar.
@@ -24,7 +24,7 @@ test purposes.  Unfortunately, to get it to work I need to display
 Google Maps on the phone!
 
 As far as I am aware, the only real free flow toll roads in the UK are
-the Mersey Gateway Brdige and the Silver Jubilee Bridge.  The app is
+the Mersey Gateway Bridge and the Silver Jubilee Bridge.  The app is
 configured to detect usage of both of these toll roads.
 
 ## Operation
@@ -46,6 +46,6 @@ reminder.  This service should continue running until the phone is
 rebooted.  You also have the option of clicking "Finish" from the app
 to stop the service and close the app.
 
-The reminder event is set to "Pay Toll" for tommorrow at noon with the
-default reminders.  There might be some querks it you pass over the
+The reminder event is set to "Pay Toll" for tomorrow at noon with the
+default reminders.  There might be some quirks it you pass over the
 bridge around midnight - I haven't got to worrying about this yet.

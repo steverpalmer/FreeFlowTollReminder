@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration
-    xmlns="http://srpalmer.me.uk/ns/freeflowtollreminder_configuration1"
-    xmlns:gpl="http://www.isotc211.org/2006/gpl"
-    version="0.1.0">
+        xmlns="http://srpalmer.me.uk/ns/freeflowtollreminder_configuration1"
+        xmlns:gpl="http://www.isotc211.org/2006/gpl"
+        version="0.1.0">
     <toll_roads>
         <toll_road>
             <name>Test</name>

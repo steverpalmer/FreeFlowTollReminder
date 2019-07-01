@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rng:grammar
-    xmlns:rng="http://relaxng.org/ns/structure/1.0"
-    datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+        xmlns:rng="http://relaxng.org/ns/structure/1.0"
+        datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
 
   <rng:start>
     <rng:element name="configuration" ns="http://srpalmer.me.uk/ns/freeflowtollreminder_configuration1">
@@ -56,5 +56,5 @@
       </rng:element>
     </rng:element>
   </rng:define>
-  
+
 </rng:grammar>

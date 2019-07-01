@@ -105,7 +105,7 @@ onBind
 onDestroy
 onFinishRequest
 --
-Reponsibilities:
+Responsibilities:
 -- Facade for Model and CalendarUpdater
 -- Detect usage of a known toll road</panel_attributes>
     <additional_attributes/>
@@ -139,7 +139,7 @@ onTollRoadDeparture
 Responsibilities:
 -- Persist calendarId
 -- Add event with reminder to calendar
--- Avoid publicate events
+-- Avoid duplicate events
 </panel_attributes>
     <additional_attributes/>
   </element>

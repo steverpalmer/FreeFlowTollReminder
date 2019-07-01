@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration
+    xmlns="http://srpalmer.me.uk/ns/freeflowtollreminder_configuration1"
+    xmlns:gpl="http://www.isotc211.org/2006/gpl"
+    version="0.1.0">
     <toll_roads>
         <toll_road>
             <name>Test</name>
-            <gpl:GPL_CoordinateTuple xmlns:gpl="http://www.isotc211.org/gpl">
+            <gpl:GPL_CoordinateTuple>
                 <gpl:tuple srsName="urn:ogc:def:crs:EPSG:6.6:4326">
                     54.052430 -2.818521
                 </gpl:tuple>
@@ -12,7 +15,7 @@
         </toll_road>
         <toll_road>
             <name>Mersey Gateway Bridge</name>
-            <gpl:GPL_CoordinateTuple xmlns:gpl="http://www.isotc211.org/gpl">
+            <gpl:GPL_CoordinateTuple>
                 <gpl:tuple srsName="urn:ogc:def:crs:EPSG:6.6:4326">
                     53.352577 -2.712887
                 </gpl:tuple>
@@ -21,7 +24,7 @@
         </toll_road>
         <toll_road>
             <name>Silver Jubilee Bridge</name>
-            <gpl:GPL_CoordinateTuple xmlns:gpl="http://www.isotc211.org/gpl">
+            <gpl:GPL_CoordinateTuple>
                 <gpl:tuple srsName="urn:ogc:def:crs:EPSG:6.6:4326">
                     53.346391 -2.737918
                 </gpl:tuple>

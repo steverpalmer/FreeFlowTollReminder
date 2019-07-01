@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rng:grammar
+    xmlns:rng="http://relaxng.org/ns/structure/1.0"
+    datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <rng:start>
+    <rng:element name="configuration" ns="http://srpalmer.me.uk/ns/freeflowtollreminder_configuration1">
+      <rng:attribute name="version">
+        <rng:data type="string">
+          <rng:param name="pattern">[0-9]+\.[0-9]+\.[0-9]+</rng:param>
+        </rng:data>
+      </rng:attribute>
+      <rng:interleave>
+        <rng:ref name="toll_roads"/>
+      </rng:interleave>
+    </rng:element>
+  </rng:start>
+
+  <rng:define name="toll_roads">
+    <rng:element name="toll_roads" ns="http://srpalmer.me.uk/ns/freeflowtollreminder_configuration1">
+      <rng:oneOrMore>
+        <rng:element name="toll_road">
+          <rng:interleave>
+            <rng:element name="name">
+              <rng:text/>
+            </rng:element>
+            <rng:ref name="GPL_CoordinateTuple"/>
+            <rng:element name="proximity_meters">
+              <rng:data type="float">
+                <rng:param name="minInclusive">50.0</rng:param>
+                <rng:param name="maxInclusive">1000.0</rng:param>
+              </rng:data>
+            </rng:element>
+          </rng:interleave>
+        </rng:element>
+      </rng:oneOrMore>
+    </rng:element>
+  </rng:define>
+
+  <rng:define name="GPL_CoordinateTuple">
+    <rng:element name="GPL_CoordinateTuple" ns="http://www.isotc211.org/2006/gpl">
+      <rng:element name="tuple">
+        <rng:attribute name="srsName">
+          <rng:value>urn:ogc:def:crs:EPSG:6.6:4326</rng:value>
+        </rng:attribute>
+        <rng:list>
+          <rng:data type="double">
+            <rng:param name="minInclusive">-90.0</rng:param>
+            <rng:param name="maxInclusive">90.0</rng:param>
+          </rng:data>
+          <rng:data type="double">
+            <rng:param name="minInclusive">-180.0</rng:param>
+            <rng:param name="maxInclusive">180.0</rng:param>
+          </rng:data>
+        </rng:list>
+      </rng:element>
+    </rng:element>
+  </rng:define>
+  
+</rng:grammar>

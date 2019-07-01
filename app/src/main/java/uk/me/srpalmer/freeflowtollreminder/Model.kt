@@ -79,6 +79,7 @@ class Model (context: Context) {
         try {
             val xmlStream = context.resources.openRawResource(R.raw.configuration)
             val documentBuilderFactory = DocumentBuilderFactory.newInstance()
+            // TODO: handle XML namespace properly
             val documentBuilder = documentBuilderFactory.newDocumentBuilder()
             val doc = documentBuilder.parse(xmlStream)
             xmlStream.close()

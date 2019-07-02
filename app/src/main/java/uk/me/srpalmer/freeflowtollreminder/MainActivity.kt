@@ -21,7 +21,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     private val logger = KotlinLogging.logger {}
 
-    var service: MainService? = null
+    var serviceBinder: MainService.MainServiceBinder? = null
 
     data class CalendarInfo (val id: Long, val name: String)
     val calendarInfoList: List<CalendarInfo> by lazy {
@@ -62,13 +62,13 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
             logger.trace { "CalendarSelector.onItemSelected(_, $position, _) started" }
-            service?.calendarId = calendarInfoList[position].id
+            serviceBinder?.calendarId = calendarInfoList[position].id
             logger.trace { "CalendarSelector.onItemSelected(_, $position, _) stopped" }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
             logger.trace { "CalendarSelector.onItemSelected(...) started" }
-            service?.calendarId = CALENDAR_ID_UNDEFINED
+            serviceBinder?.calendarId = CALENDAR_ID_UNDEFINED
             logger.trace { "CalendarSelector.onItemSelected(...) stopped" }
         }
 
@@ -94,6 +94,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         logger.trace { "onCreate(...) stopped" }
     }
 
+    /*
     private val modelObserver = object: ModelObserver {
 
         override fun onTollRoadArrival(name: String) {
@@ -109,6 +110,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         }
 
     }
+    */
 
     override fun onStart() {
         logger.trace { "onStart(...) started" }
@@ -124,28 +126,27 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
         logger.trace { "onServiceConnected(...) started" }
-        val binder = iBinder as MainService.MainServiceBinder
-        service = binder.getService()
-        service?.attach(modelObserver)
+        serviceBinder = iBinder as MainService.MainServiceBinder
+        // serviceBinder?.modelAttach(modelObserver)
         logger.trace { "searching for calendar" }
         var position = -1
         for ((id, _) in calendarInfoList) {
             position++
-            if (id == service?.calendarId) {
+            if (id == serviceBinder?.calendarId) {
                 calendarSelection.setSelection(position)
                 break
             }
         }
         calendarSelection.visibility = View.VISIBLE
-        statusDisplay.text = ""
+        statusDisplay.text = "Connected"
         logger.trace { "onServiceConnected(...) stopped" }
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
         logger.trace { "onServiceDisconnected(...) started" }
         calendarSelection.visibility = View.INVISIBLE
-        service?.detach(modelObserver)
-        service = null
+        // serviceBinder?.modelDetach(modelObserver)
+        serviceBinder = null
         statusDisplay.text = "..."
         logger.trace { "onServiceDisconnected(...) stopped" }
     }
@@ -153,7 +154,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
     override fun onStop() {
         logger.trace { "OnStop() started" }
         super.onStop()
-        service?.detach(modelObserver)
+        // serviceBinder?.modelDetach(modelObserver)
         unbindService(this)
         logger.trace { "OnStop() stopped" }
     }
@@ -166,7 +167,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     private fun onFinishRequest() {
         logger.trace { "onFinishRequest() started" }
-        service?.onFinishRequest()
+        serviceBinder?.onFinishRequest()
         finish()
         logger.trace { "onFinishRequest() stopped" }
     }

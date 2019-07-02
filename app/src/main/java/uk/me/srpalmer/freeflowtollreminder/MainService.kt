@@ -12,11 +12,6 @@ import android.support.v4.content.ContextCompat
 import com.google.android.gms.location.*
 import mu.KotlinLogging
 
-/*
- * As well as being a service to receive Geofence Transition events,
- * potentially out-living the activity that created it,
- * this is also a facade on the objects it owns.
- */
 class MainService : Service() {
 
     private val logger = KotlinLogging.logger {}
@@ -26,13 +21,8 @@ class MainService : Service() {
     }
 
     private val model = Model(this)
-    fun attach(modelObserver: ModelObserver) = model.attach(modelObserver)
-    fun detach(modelObserver: ModelObserver) = model.detach(modelObserver)
 
     private lateinit var calendarUpdater: CalendarUpdater
-    var calendarId
-        get () = calendarUpdater.calendarId
-        set (value) {calendarUpdater.calendarId = value}
 
     private val notificationId = 666  // TODO: check what numbers should be used
 
@@ -142,7 +132,12 @@ class MainService : Service() {
     }
 
     inner class MainServiceBinder: Binder() {
-        fun getService() = this@MainService
+        var calendarId
+            get () = calendarUpdater.calendarId
+            set (value) {calendarUpdater.calendarId = value}
+        // fun modelAttach(modelObserver: ModelObserver) = model.attach(modelObserver)
+        // fun modelDetach(modelObserver: ModelObserver) = model.detach(modelObserver)
+        fun onFinishRequest() = this@MainService.onFinishRequest()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -163,6 +158,7 @@ class MainService : Service() {
     }
 
     fun onFinishRequest() {
+        // TODO: Worry about thread safety
         logger.trace { "onFinishRequest() started" }
         stopForeground(true)
         stopSelf()

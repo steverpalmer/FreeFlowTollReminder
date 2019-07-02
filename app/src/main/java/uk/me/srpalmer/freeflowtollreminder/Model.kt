@@ -115,17 +115,21 @@ class Model (context: Context) {
     var tollRoadId
         get() = _tollRoadId.get()
         set(new) {
-            if (new != FREE_ROAD || new < 0 && new >= tollRoads.size)
+            if (new != FREE_ROAD && !(new >= 0 && new < tollRoads.size))
                 logger.error { "Unexpected toll tollRoadId: $new" }
             else {
                 val old = _tollRoadId.get()
                 _tollRoadId.set(new)
                 if (new != old) {
                     logger.trace { "tollRoadId notification started" }
-                    if (old != FREE_ROAD)
+                    if (old != FREE_ROAD) {
+                        logger.info { "Departing ${tollRoads[old].name}" }
                         observers.forEach { it.onTollRoadDeparture(tollRoads[old].name) }
-                    if (new != FREE_ROAD)
+                    }
+                    if (new != FREE_ROAD) {
+                        logger.info { "Arriving ${tollRoads[new].name}" }
                         observers.forEach { it.onTollRoadArrival(tollRoads[new].name) }
+                    }
                     logger.trace { "tollRoadId notification stopped" }
                 }
             }

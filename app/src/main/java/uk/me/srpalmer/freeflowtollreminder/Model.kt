@@ -6,13 +6,10 @@ import mu.KotlinLogging
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
-import org.xml.sax.SAXException
-import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.parsers.ParserConfigurationException
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import kotlin.properties.Delegates
 
 data class CircularRegion(
     private var _name: String,
@@ -67,15 +64,15 @@ interface ModelObserver {
     }
 }
 
-const val FREE_ROAD = ""
+const val FREE_ROAD = -1
 
 class Model (context: Context) {
 
     private val logger = KotlinLogging.logger {}
 
-    val tollRoads: Map<String, CircularRegion> by lazy {
+    val tollRoads: List<CircularRegion> by lazy {
         logger.trace { "Initializing tollRoads" }
-        val result = HashMap<String, CircularRegion>()
+        val result = mutableListOf<CircularRegion>()
         try {
             val xmlStream = context.resources.openRawResource(R.raw.configuration)
             val documentBuilderFactory = DocumentBuilderFactory.newInstance()
@@ -90,14 +87,10 @@ class Model (context: Context) {
                 if (tollRoadsElements.item(i).nodeType == Node.ELEMENT_NODE) {
                     val tollRoadElement = tollRoadsElements.item(i) as Element
                     val circularRegion = CircularRegion(tollRoadElement)
-                    result[circularRegion.name] = circularRegion
+                    result.add(circularRegion)
                 }
             }
-        } catch (e: IOException) {
-            logger.error { e.message }
-        } catch (e: ParserConfigurationException) {
-            logger.error { e.message }
-        } catch (e: SAXException) {
+        } catch (e: Throwable) {
             logger.error { e.message }
         }
         logger.trace { "tollRoads Initialized" }
@@ -118,20 +111,24 @@ class Model (context: Context) {
         logger.trace { "detach() stopped" }
     }
 
-    var location: String by Delegates.observable(FREE_ROAD) {
-            _, old, new ->
-        logger.trace { "location notification started" }
-        if (new != FREE_ROAD && new !in tollRoads)
-            logger.error { "Unexpected toll location name: $new" }
-        if (new == old)
-            logger.error { "Delegate.observer,onChange called when value unchanged!" }
-        else {
-            if (old != FREE_ROAD)
-                observers.forEach { it.onTollRoadDeparture(old) }
-            if (new != FREE_ROAD)
-                observers.forEach { it.onTollRoadArrival(new) }
+    private val _tollRoadId = AtomicInteger(FREE_ROAD)
+    var tollRoadId
+        get() = _tollRoadId.get()
+        set(new) {
+            if (new != FREE_ROAD || new < 0 && new >= tollRoads.size)
+                logger.error { "Unexpected toll tollRoadId: $new" }
+            else {
+                val old = _tollRoadId.get()
+                _tollRoadId.set(new)
+                if (new != old) {
+                    logger.trace { "tollRoadId notification started" }
+                    if (old != FREE_ROAD)
+                        observers.forEach { it.onTollRoadDeparture(tollRoads[old].name) }
+                    if (new != FREE_ROAD)
+                        observers.forEach { it.onTollRoadArrival(tollRoads[new].name) }
+                    logger.trace { "tollRoadId notification stopped" }
+                }
+            }
         }
-        logger.trace { "location notification stopped" }
-    }
 
 }

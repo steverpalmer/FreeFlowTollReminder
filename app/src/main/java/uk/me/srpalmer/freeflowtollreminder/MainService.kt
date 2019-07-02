@@ -36,6 +36,13 @@ class MainService : Service() {
 
     private val notificationId = 666  // TODO: check what numbers should be used
 
+    private var geofencingClient: GeofencingClient? = null
+
+    private val geofencePendingIntent : PendingIntent by lazy {
+        val intent = Intent(this, MainService::class.java)
+        PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
     override fun onCreate() {
         logger.trace { "onCreate() started" }
 
@@ -73,17 +80,16 @@ class MainService : Service() {
         else
             model.attach(calendarUpdater)
 
-
         logger.trace { "Geofence Stuff" }
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to access fine location" }
         else {
             geofencingClient = LocationServices.getGeofencingClient(this)
             //  Prepare GeoFences
-            for ((name, region) in model.tollRoads) {
+            model.tollRoads.forEachIndexed { index, circularRegion ->
                 val geofence = Geofence.Builder()
-                    .setRequestId(name)
-                    .setCircularRegion(region.latitude, region.longitude, region.radius)
+                    .setRequestId(index.toString())
+                    .setCircularRegion(circularRegion.latitude, circularRegion.longitude, circularRegion.radius)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .build()
@@ -93,24 +99,16 @@ class MainService : Service() {
                 }.build()
                 geofencingClient?.addGeofences(geofenceRequest, geofencePendingIntent)?.run {
                     addOnSuccessListener {
-                        logger.info { "$name geofence ready" }
+                        logger.info { "${circularRegion.name} geofence ready" }
                     }
                     addOnFailureListener {
-                        logger.error { "Failed to add $name geofence: ${it.message}" }
+                        logger.error { "Failed to add ${circularRegion.name} geofence: ${it.message}" }
                     }
-
                 }
             }
         }
 
         logger.trace { "onCreate() stopped" }
-    }
-
-    private var geofencingClient: GeofencingClient? = null
-
-    private val geofencePendingIntent : PendingIntent by lazy {
-        val intent = Intent(this, MainService::class.java)
-        PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -127,12 +125,12 @@ class MainService : Service() {
                     logger.trace { "Geofence Enter Transition" }
                     // Only expecting one, but loop anyway ...
                     for (geofence in geofencingEvent.triggeringGeofences) {
-                        model.location = geofence.requestId
+                        model.tollRoadId = geofence.requestId.toInt()
                     }
                 }
                 Geofence.GEOFENCE_TRANSITION_EXIT -> {
                     logger.trace { "Geofence Exit Transition" }
-                    model.location = FREE_ROAD
+                    model.tollRoadId = FREE_ROAD
                 }
                 else -> {
                     logger.error { "Unexpected geofence transition: ${geofencingEvent.geofenceTransition}" }

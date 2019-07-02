@@ -8,18 +8,19 @@ import android.content.SharedPreferences
 import android.provider.CalendarContract
 import mu.KotlinLogging
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
-typealias CalendarId = Long
-typealias EventId = Long
-
-const val CALENDAR_ID_UNDEFINED: CalendarId = 0  // calendars are numbers from 1 ..
-const val EVENT_ID_UNDEFINED: EventId = -1
+const val CALENDAR_ID_UNDEFINED: Long = -1  // calendars are numbers from 1 ..
+const val EVENT_ID_UNDEFINED: Long = -1
 
 class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObserver {
 
     private val logger = KotlinLogging.logger {}
 
-    var calendarId: CalendarId = CALENDAR_ID_UNDEFINED
+    private val _calendarId = AtomicLong(CALENDAR_ID_UNDEFINED)
+    var calendarId
+        get() = _calendarId.get()
+        set(value) = _calendarId.set(value)
 
     fun onCreate(sharedPreferences: SharedPreferences) {
         calendarId = sharedPreferences.getLong(calendarIdKey, CALENDAR_ID_UNDEFINED)
@@ -29,7 +30,7 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
 
     private val timeZone = TimeZone.getTimeZone("Europe/London")
 
-    private fun findEvent(title: String, startMillis: Long): EventId {
+    private fun findEvent(title: String, startMillis: Long): Long {
         logger.trace { "findEvent($title, $startMillis) started" }
         var result = EVENT_ID_UNDEFINED
         if (calendarId == CALENDAR_ID_UNDEFINED)

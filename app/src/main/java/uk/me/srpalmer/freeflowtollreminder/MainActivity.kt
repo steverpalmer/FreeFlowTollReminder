@@ -23,7 +23,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
 
     var service: MainService? = null
 
-    data class CalendarInfo (val id: CalendarId, val name: String)
+    data class CalendarInfo (val id: Long, val name: String)
     val calendarInfoList: List<CalendarInfo> by lazy {
         logger.trace { "calendarInfoList Construction started" }
         val cursor = contentResolver.query(

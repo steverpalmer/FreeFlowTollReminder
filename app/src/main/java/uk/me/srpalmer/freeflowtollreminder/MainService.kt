@@ -32,9 +32,7 @@ class MainService : Service() {
     private lateinit var calendarUpdater: CalendarUpdater
     var calendarId
         get () = calendarUpdater.calendarId
-        set (value) {
-            calendarUpdater.calendarId = value
-        }
+        set (value) {calendarUpdater.calendarId = value}
 
     private val notificationId = 666  // TODO: check what numbers should be used
 

@@ -127,7 +127,7 @@ class Model (context: Context) {
                         observers.forEach { it.onTollRoadDeparture(tollRoads[old].name) }
                     }
                     if (new != FREE_ROAD) {
-                        logger.info { "Arriving ${tollRoads[new].name}" }
+                        logger.info { "Arriving at ${tollRoads[new].name}" }
                         observers.forEach { it.onTollRoadArrival(tollRoads[new].name) }
                     }
                     logger.trace { "tollRoadId notification stopped" }

@@ -94,23 +94,7 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
         logger.trace { "onCreate(...) stopped" }
     }
 
-    /*
-    private val modelObserver = object: ModelObserver {
-
-        override fun onTollRoadArrival(name: String) {
-            logger.trace { "onTollRoadArrival($name) started" }
-            statusDisplay.text = name
-            logger.trace { "onTollRoadArrival(...) stopped" }
-        }
-
-        override fun onTollRoadDeparture(name: String) {
-            logger.trace { "onTollRoadDeparture($name) started" }
-            statusDisplay.text = ""
-            logger.trace { "onTollRoadDeparture(...) stopped" }
-        }
-
-    }
-    */
+    // private val modelObserver = object: ModelObserver {}
 
     override fun onStart() {
         logger.trace { "onStart(...) started" }
@@ -127,7 +111,6 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
     override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
         logger.trace { "onServiceConnected(...) started" }
         serviceBinder = iBinder as MainService.MainServiceBinder
-        // serviceBinder?.modelAttach(modelObserver)
         logger.trace { "searching for calendar" }
         var position = -1
         for ((id, _) in calendarInfoList) {
@@ -138,23 +121,19 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
             }
         }
         calendarSelection.visibility = View.VISIBLE
-        statusDisplay.text = "Connected"
         logger.trace { "onServiceConnected(...) stopped" }
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
         logger.trace { "onServiceDisconnected(...) started" }
         calendarSelection.visibility = View.INVISIBLE
-        // serviceBinder?.modelDetach(modelObserver)
         serviceBinder = null
-        statusDisplay.text = "..."
         logger.trace { "onServiceDisconnected(...) stopped" }
     }
 
     override fun onStop() {
         logger.trace { "OnStop() started" }
         super.onStop()
-        // serviceBinder?.modelDetach(modelObserver)
         unbindService(this)
         logger.trace { "OnStop() stopped" }
     }

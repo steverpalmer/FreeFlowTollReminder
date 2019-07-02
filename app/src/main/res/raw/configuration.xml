@@ -11,7 +11,7 @@
                     54.052430 -2.818521
                 </gpl:tuple>
             </gpl:GPL_CoordinateTuple>
-            <proximity_meters>50.0</proximity_meters>
+            <proximity_meters>250.0</proximity_meters>
         </toll_road>
         <toll_road>
             <name>Mersey Gateway Bridge</name>

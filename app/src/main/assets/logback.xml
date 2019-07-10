@@ -1,6 +1,7 @@
 <!-- Copyright 2019 Steve Palmer -->
 <configuration>
-  <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
+  <property name="LOG_DIR" value="/sdcard/Download"/>
+  <appender name="LOGCAT" class="ch.qos.logback.classic.android.LogcatAppender">
     <tagEncoder>
       <pattern>%logger{12}</pattern>
     </tagEncoder>
@@ -8,8 +9,14 @@
       <pattern>[%-20thread] %msg</pattern>
     </encoder>
   </appender>
-
-  <root level="INFO">
-    <appender-ref ref="logcat" />
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>${LOG_DIR}/freeflowtollreminder.log</file>
+    <encoder>
+      <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
+    </encoder>
+  </appender>
+  <root level="TRACE">
+    <appender-ref ref="LOGCAT" />
+    <appender-ref ref="FILE" />
   </root>
 </configuration>

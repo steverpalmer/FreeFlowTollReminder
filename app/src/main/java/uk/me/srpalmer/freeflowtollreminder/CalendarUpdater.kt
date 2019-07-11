@@ -7,13 +7,14 @@ import android.content.ContentValues
 import android.content.SharedPreferences
 import android.provider.CalendarContract
 import mu.KotlinLogging
+import uk.me.srpalmer.freeflowtollreminder.model.TollRoad
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
 const val CALENDAR_ID_UNDEFINED: Long = -1  // calendars are numbers from 1 ..
 const val EVENT_ID_UNDEFINED: Long = -1
 
-class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObserver {
+class CalendarUpdater (private val contentResolver: ContentResolver) {
 
     private val logger = KotlinLogging.logger {}
 
@@ -78,25 +79,17 @@ class CalendarUpdater (private val contentResolver: ContentResolver) : ModelObse
         logger.trace { "putEvent(...) added event: ${uri?.lastPathSegment}" }
     }
 
-    override fun onTollRoadDeparture(name: String) {
-        logger.trace { "onTollRoadDeparture($name) started" }
+    fun addReminder(tollDue: TollRoad.Due) {
+        logger.trace { "addReminder($tollDue) started" }
         if (calendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
         else {
-            val title = "Pay $name toll"
-            val startMillis = Calendar.getInstance(timeZone).run {
-                add(Calendar.DAY_OF_MONTH, 1)
-                set(Calendar.HOUR_OF_DAY, 12)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-                timeInMillis
-            }
-            val oldEventId = findEvent(title, startMillis)
+            val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1000
+            val oldEventId = findEvent(tollDue.reminder, startMillis)
             if (oldEventId != EVENT_ID_UNDEFINED)
                 logger.debug { "Event already present: $oldEventId" }
             else
-                putEvent(title, startMillis)
+                putEvent(tollDue.reminder, startMillis)
         }
         logger.trace { "onTollRoadDeparture(...) stopped" }
     }

@@ -11,8 +11,15 @@ import android.support.v4.app.NotificationCompat
 import android.support.v4.content.ContextCompat
 import com.google.android.gms.location.*
 import mu.KotlinLogging
+import org.w3c.dom.Element
+import org.w3c.dom.Node
+import org.w3c.dom.NodeList
+import uk.me.srpalmer.freeflowtollreminder.model.TollRoad
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
 
-class MainService : Service() {
+class MainService : Service(){
 
     private val logger = KotlinLogging.logger {}
 
@@ -20,18 +27,117 @@ class MainService : Service() {
         getSharedPreferences(SHARED_PREFERENCES_FILE_NAME, Context.MODE_PRIVATE)
     }
 
-    private val model = Model(this)
+    private val tollRoads: List<TollRoad> by lazy {
+        logger.trace { "Initializing tollRoads" }
+        val result = mutableListOf<TollRoad>()
+        try {
+            val xmlStream = resources.openRawResource(R.raw.configuration)
+            val documentBuilderFactory = DocumentBuilderFactory.newInstance()
+            // TODO: handle XML namespace properly
+            val documentBuilder = documentBuilderFactory.newDocumentBuilder()
+            val doc = documentBuilder.parse(xmlStream)
+            xmlStream.close()
+            val xPathFactory = XPathFactory.newInstance()
+            val xPath = xPathFactory.newXPath()
+            val tollRoadsElements = xPath.evaluate("/configuration/toll_roads/toll_road", doc, XPathConstants.NODESET) as NodeList
+            for (i in 0 until tollRoadsElements.length) {
+                if (tollRoadsElements.item(i).nodeType == Node.ELEMENT_NODE) {
+                    val tollRoadElement = tollRoadsElements.item(i) as Element
+                    val tollRoad = TollRoad(tollRoadElement)
+                    result.add(tollRoad)
+                }
+            }
+        } catch (e: Throwable) {
+            logger.error { e.message }
+        }
+        logger.trace { "tollRoads Initialized" }
+        result
+    }
 
-    private lateinit var calendarUpdater: CalendarUpdater
+    private val calendarUpdater by lazy { CalendarUpdater(contentResolver) }
 
     private val notificationId = 666  // TODO: check what numbers should be used
 
-    private var geofencingClient: GeofencingClient? = null
+    private val fusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
+    private val settingsClient: SettingsClient by lazy { LocationServices.getSettingsClient(this) }
 
-    private val geofencePendingIntent : PendingIntent by lazy {
-        val intent = Intent(this, MainService::class.java)
-        PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    private val locationRequest by lazy { LocationRequest.create() }
+
+    private val locationCallback = object : LocationCallback() {
+        var armed = false
+            set(value) {
+                logger.trace { "locationCallback.setArmed($value) started" }
+                if (field != value)
+                {
+                    if (!value)
+                        fusedLocationProviderClient.removeLocationUpdates(this).apply {
+                            addOnFailureListener { exception ->
+                                logger.error { "removeLocationUpdates failure: $exception" }
+                            }
+                            addOnSuccessListener {
+                                logger.debug { "removeLocationUpdates success" }
+                            }
+                        }
+                    else
+                        fusedLocationProviderClient.requestLocationUpdates(locationRequest, this, null).apply {
+                            addOnFailureListener { exception ->
+                                logger.error { "requestLocationUpdates failure: $exception" }
+                            }
+                            addOnSuccessListener {
+                                logger.debug { "requestLocationUpdates success" }
+                            }
+                        }
+                    field = value
+                }
+                logger.trace { "locationCallback.setArmed($value) stopped" }
+            }
+
+        override fun onLocationResult(locationResult: LocationResult?) {
+            logger.trace { "onLocationResult started" }
+            locationResult ?: return
+            for (location in locationResult.locations)
+                for (tollRoad in tollRoads) {
+                    val tollDue = tollRoad.isTollDue(location)
+                    if (tollDue != null) {
+                        logger.info { "Toll due: ${tollDue.reminder}" }
+                        calendarUpdater.addReminder(tollDue)
+                    }
+                }
+            val nearestTollRoadProximity = TollRoad.Proximity.farFarAway
+            for (tollRoad in tollRoads)
+                nearestTollRoadProximity.updateIfNearer(tollRoad.proximity())
+            proximity = nearestTollRoadProximity
+            logger.trace { "onLocationResult stopped" }
+        }
     }
+
+    private var proximity: TollRoad.Proximity? = null
+        set(value) {
+            logger.trace { "setProximity($value) started" }
+            if (field != value ) {
+                locationCallback.armed = false
+                if (value != null) {
+                    locationRequest.apply {
+                        interval = value.intervalMilliseconds
+                        fastestInterval = value.intervalMilliseconds
+                        priority = value.priority
+                    }
+                    val locationSettingsRequest = LocationSettingsRequest.Builder()
+                        .addLocationRequest(locationRequest)
+                    settingsClient.checkLocationSettings(locationSettingsRequest.build()).apply {
+                        addOnFailureListener { exception ->
+                            logger.error { "location settings error: $exception" }
+                        }
+                        addOnSuccessListener { locationSettingsResponse ->
+                            logger.debug { "location settings response: $locationSettingsResponse" }
+                        }
+                    }
+                    locationCallback.armed = true
+                }
+                field = value
+            }
+            logger.trace { "setProximity($value) stopped" }
+        }
 
     override fun onCreate() {
         logger.trace { "onCreate() started" }
@@ -63,80 +169,26 @@ class MainService : Service() {
         startForeground(notificationId, notificationBuilder.build())
 
         logger.trace { "Calender Stuff" }
-        calendarUpdater = CalendarUpdater(contentResolver)
-        calendarUpdater.onCreate(sharedPreferences)
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to update calendar" }
         else
-            model.attach(calendarUpdater)
+            calendarUpdater.onCreate(sharedPreferences)
 
-        logger.trace { "Geofence Stuff" }
+        tollRoads // Prompt the XML processing
+
+        logger.trace { "Location Stuff" }
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to access fine location" }
-        else {
-            geofencingClient = LocationServices.getGeofencingClient(this)
-            //  Prepare GeoFences
-            model.tollRoads.forEachIndexed { index, circularRegion ->
-                val geofence = Geofence.Builder()
-                    .setRequestId(index.toString())
-                    .setCircularRegion(circularRegion.latitude, circularRegion.longitude, circularRegion.radius)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .build()
-                val geofenceRequest = GeofencingRequest.Builder().apply {
-                    setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-                    addGeofence(geofence)
-                }.build()
-                geofencingClient?.addGeofences(geofenceRequest, geofencePendingIntent)?.run {
-                    addOnSuccessListener {
-                        logger.info { "${circularRegion.name} geofence ready" }
-                    }
-                    addOnFailureListener {
-                        logger.error { "Failed to add ${circularRegion.name} geofence: ${it.message}" }
-                    }
-                }
-            }
-        }
+        else
+            proximity = TollRoad.Proximity(2000, LocationRequest.PRIORITY_HIGH_ACCURACY)
 
         logger.trace { "onCreate() stopped" }
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        logger.trace { "onStartCommand($intent, $flags, $startId) started" }
-        if (intent != null) {
-            val geofencingEvent = GeofencingEvent.fromIntent(intent)
-            if (geofencingEvent.hasError()) {
-                logger.error { "Geofencing Error: ${geofencingEvent.errorCode}" }
-            } else when (geofencingEvent.geofenceTransition) {
-                -1 -> {
-                    logger.trace { "Service Start Intent" }
-                }
-                Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                    logger.trace { "Geofence Enter Transition" }
-                    // Only expecting one, but loop anyway ...
-                    for (geofence in geofencingEvent.triggeringGeofences) {
-                        model.tollRoadId = geofence.requestId.toInt()
-                    }
-                }
-                Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                    logger.trace { "Geofence Exit Transition" }
-                    model.tollRoadId = FREE_ROAD
-                }
-                else -> {
-                    logger.error { "Unexpected geofence transition: ${geofencingEvent.geofenceTransition}" }
-                }
-            }
-        }
-        logger.trace { "onStartCommand(...) stopped" }
-        return START_NOT_STICKY
     }
 
     inner class MainServiceBinder: Binder() {
         var calendarId
             get () = calendarUpdater.calendarId
             set (value) {calendarUpdater.calendarId = value}
-        // fun modelAttach(modelObserver: ModelObserver) = model.attach(modelObserver)
-        // fun modelDetach(modelObserver: ModelObserver) = model.detach(modelObserver)
         fun onFinishRequest() = this@MainService.onFinishRequest()
     }
 
@@ -147,9 +199,7 @@ class MainService : Service() {
 
     override fun onDestroy() {
         logger.trace { "onDestroy() started" }
-        logger.info { "All geofences cleared" }
-        geofencingClient?.removeGeofences(geofencePendingIntent)
-        model.detach(calendarUpdater)
+        proximity = null
         sharedPreferences.edit().apply {
             calendarUpdater.onDestroy(this)
             commit()

@@ -1,6 +1,7 @@
 package uk.me.srpalmer.freeflowtollreminder
 // Copyright 2019 Steve Palmer
 
+import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
@@ -78,7 +79,7 @@ class MainService : Service(){
                                 logger.debug { "removeLocationUpdates success" }
                             }
                         }
-                    else
+                    else try {
                         fusedLocationProviderClient.requestLocationUpdates(locationRequest, this, null).apply {
                             addOnFailureListener { exception ->
                                 logger.error { "requestLocationUpdates failure: $exception" }
@@ -87,6 +88,9 @@ class MainService : Service(){
                                 logger.debug { "requestLocationUpdates success" }
                             }
                         }
+                    } catch (exception: SecurityException) {
+                        logger.error { "requestLocationUpdates failure: $exception" }
+                    }
                     field = value
                 }
                 logger.trace { "locationCallback.setArmed($value) stopped" }
@@ -180,7 +184,7 @@ class MainService : Service(){
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
             logger.error { "Don't have permission to access fine location" }
         else
-            proximity = TollRoad.Proximity(2000, LocationRequest.PRIORITY_HIGH_ACCURACY)
+            proximity = TollRoad.Proximity.closeBy  // get accurate first reading
 
         logger.trace { "onCreate() stopped" }
     }
@@ -197,6 +201,7 @@ class MainService : Service(){
         return MainServiceBinder()
     }
 
+    @SuppressLint("ApplySharedPref")
     override fun onDestroy() {
         logger.trace { "onDestroy() started" }
         proximity = null

@@ -84,13 +84,13 @@ class CalendarUpdater (private val contentResolver: ContentResolver) {
         if (calendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
         else {
-            val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1000
+            val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1_000
             val oldEventId = findEvent(tollDue.reminder, startMillis)
             if (oldEventId != EVENT_ID_UNDEFINED)
-                logger.info { "Event ${tollDue.reminder} found" }
+                logger.info { "Event \"${tollDue.reminder}\" found" }
             else {
                 putEvent(tollDue.reminder, startMillis)
-                logger.info { "Event ${tollDue.reminder} added" }
+                logger.info { "Event \"${tollDue.reminder}\" added" }
             }
         }
         logger.trace { "onTollRoadDeparture(...) stopped" }

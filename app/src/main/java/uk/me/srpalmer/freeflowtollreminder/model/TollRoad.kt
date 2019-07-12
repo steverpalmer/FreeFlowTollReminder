@@ -97,9 +97,9 @@ class TollRoad(node: Node) {
         }
 
         companion object {
-            val farFarAway = Proximity(10 * 60 * 1000, LocationRequest.PRIORITY_LOW_POWER)
-            val inCity     = Proximity(     30 * 1000, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
-            val closeBy    = Proximity(      2 * 1000, LocationRequest.PRIORITY_HIGH_ACCURACY)
+            val farFarAway = Proximity(10 * 60 * 1_000, LocationRequest.PRIORITY_LOW_POWER)
+            val inCity     = Proximity(     30 * 1_000, LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
+            val closeBy    = Proximity(      2 * 1_000, LocationRequest.PRIORITY_HIGH_ACCURACY)
         }
     }
 
@@ -108,8 +108,8 @@ class TollRoad(node: Node) {
         logger.trace { "proximity() started" }
         val d = distance - radius
         val result = when {
-            d <  1500.0f -> Proximity.closeBy
-            d < 20000.0f -> Proximity.inCity
+            d <  1_500.0f -> Proximity.closeBy
+            d < 20_000.0f -> Proximity.inCity
             else         -> Proximity.farFarAway
         }
         logger.trace { "proximity() returns $result" }

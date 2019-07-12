@@ -87,9 +87,11 @@ class CalendarUpdater (private val contentResolver: ContentResolver) {
             val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1000
             val oldEventId = findEvent(tollDue.reminder, startMillis)
             if (oldEventId != EVENT_ID_UNDEFINED)
-                logger.debug { "Event already present: $oldEventId" }
-            else
+                logger.info { "Event ${tollDue.reminder} found" }
+            else {
                 putEvent(tollDue.reminder, startMillis)
+                logger.info { "Event ${tollDue.reminder} added" }
+            }
         }
         logger.trace { "onTollRoadDeparture(...) stopped" }
     }

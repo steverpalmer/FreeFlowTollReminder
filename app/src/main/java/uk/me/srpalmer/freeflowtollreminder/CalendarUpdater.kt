@@ -29,14 +29,17 @@ class CalendarUpdater (private val contentResolver: ContentResolver) {
 
     private val durationMillis = 10 * 60 * 1_000  // TODO: Configuration option
 
-    private val timeZone = TimeZone.getTimeZone("Europe/London")
+    private val timeZone = TimeZone.getTimeZone("Europe/London")  // TODO: Generalize
 
-    private fun findEvent(title: String, startMillis: Long): Long {
-        logger.trace { "findEvent($title, $startMillis) started" }
-        var result = EVENT_ID_UNDEFINED
-        if (calendarId == CALENDAR_ID_UNDEFINED)
+    fun addReminder(tollDue: TollRoad.Due) {
+        logger.trace { "addReminder($tollDue) started" }
+        // To avoid the user selecting a different calendar in the middle of adding a reminder, take a local copy...
+        val reminderCalendarId = calendarId
+        if (reminderCalendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
         else {
+            val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1_000
+            var oldEventId = EVENT_ID_UNDEFINED
             val searchStartMillis = startMillis - durationMillis / 2
             val searchEndMillis = searchStartMillis + 2 * durationMillis
             val uriBuilder = CalendarContract.Instances.CONTENT_URI.buildUpon()
@@ -45,55 +48,37 @@ class CalendarUpdater (private val contentResolver: ContentResolver) {
             val cur = contentResolver.query(
                 uriBuilder.build(),
                 arrayOf(CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE),
-                null,
-                null)
+               null,
+               null)
             if (cur == null)
                 logger.error { "query returned null cursor" }
             else {
                 while (cur.moveToNext()) {
-                    if (cur.getString(1) == title) {
-                        result = cur.getLong(0)
+                    if (cur.getString(1) == tollDue.reminder) {
+                        oldEventId = cur.getLong(0)
                         break
                     }
                 }
                 cur.close()
             }
-        }
-        logger.trace { "findEvent(...) returns $result" }
-        return result
-    }
-
-    private fun putEvent(title: String, startMillis: Long) {
-        logger.trace { "putEvent($title, $startMillis) started" }
-        val endMillis = startMillis + durationMillis
-        val values = ContentValues().apply {
-            put(CalendarContract.Events.DTSTART, startMillis)
-            put(CalendarContract.Events.DTEND, endMillis)
-            put(CalendarContract.Events.TITLE, title)
-            put(CalendarContract.Events.CALENDAR_ID, calendarId)
-            put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.id)
-            // TODO: private or not?  put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
-            put(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_TENTATIVE)
-        }
-        val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-        logger.trace { "putEvent(...) added event: ${uri?.lastPathSegment}" }
-    }
-
-    fun addReminder(tollDue: TollRoad.Due) {
-        logger.trace { "addReminder($tollDue) started" }
-        if (calendarId == CALENDAR_ID_UNDEFINED)
-            logger.error { "Calendar not identified" }
-        else {
-            val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1_000
-            val oldEventId = findEvent(tollDue.reminder, startMillis)
             if (oldEventId != EVENT_ID_UNDEFINED)
-                logger.info { "Event \"${tollDue.reminder}\" found" }
+                logger.info { "Event \"${tollDue.reminder}\" found: $oldEventId" }
             else {
-                putEvent(tollDue.reminder, startMillis)
-                logger.info { "Event \"${tollDue.reminder}\" added" }
+                val endMillis = startMillis + durationMillis
+                val values = ContentValues().apply {
+                    put(CalendarContract.Events.DTSTART, startMillis)
+                    put(CalendarContract.Events.DTEND, endMillis)
+                    put(CalendarContract.Events.TITLE, tollDue.reminder)
+                    put(CalendarContract.Events.CALENDAR_ID, reminderCalendarId)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.id)
+                    // TODO: private or not?  put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
+                    put(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_TENTATIVE)
+                }
+                val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                logger.info { "Event \"${tollDue.reminder}\" added: ${uri?.lastPathSegment}" }
             }
         }
-        logger.trace { "onTollRoadDeparture(...) stopped" }
+        logger.trace { "addReminder(...) stopped" }
     }
 
     fun onDestroy(sharedPreferencesEditor: SharedPreferences.Editor) {

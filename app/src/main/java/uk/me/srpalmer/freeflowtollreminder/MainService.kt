@@ -119,6 +119,7 @@ class MainService : Service(){
         set(value) {
             logger.trace { "setProximity($value) started" }
             if (field != value ) {
+                logger.info { "Proximity updated to: $value" }
                 locationCallback.armed = false
                 if (value != null) {
                     locationRequest.apply {

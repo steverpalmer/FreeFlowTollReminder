@@ -85,26 +85,10 @@ class TollRoad(node: Node) {
         return result
     }
 
-    data class Proximity(private var _intervalMilliseconds: Long, private var _priority: Int): Comparable<Proximity> {
-
-        val intervalMilliseconds get() = _intervalMilliseconds
-        val priority get() = _priority
-
-        override fun equals(other: Any?): Boolean {
-            return when(other) {
-                is Proximity ->
-                    (_intervalMilliseconds == other._intervalMilliseconds) && (_priority == other._priority)
-                else ->
-                    false
-            }
-        }
-
-        override fun hashCode(): Int {
-            return _intervalMilliseconds.hashCode() * 31 + _priority
-        }
+    data class Proximity(val intervalMilliseconds: Long, val priority: Int): Comparable<Proximity> {
 
         override fun compareTo(other: Proximity): Int {
-            return _intervalMilliseconds.compareTo(other._intervalMilliseconds)
+            return intervalMilliseconds.compareTo(other.intervalMilliseconds)
         }
 
         companion object {

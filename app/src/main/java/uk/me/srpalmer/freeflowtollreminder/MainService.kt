@@ -176,13 +176,15 @@ class MainService : Service(){
         else
             calendarUpdater.onCreate(sharedPreferences)
 
-        tollRoads // Prompt the XML processing
-
         logger.trace { "Location Stuff" }
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            logger.error { "Don't have permission to access fine location" }
-        else
-            proximity = TollRoad.Proximity.closeBy  // get accurate first reading
+        when {
+            tollRoads.isEmpty()
+                -> logger.error { "No Toll Roads defined" }
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                -> logger.error { "Don't have permission to access fine location" }
+            else
+                -> proximity = TollRoad.Proximity.closeBy  // get accurate first reading
+        }
 
         logger.trace { "onCreate() stopped" }
     }

@@ -71,7 +71,7 @@ class CalendarUpdater (private val contentResolver: ContentResolver) {
                     put(CalendarContract.Events.TITLE, tollDue.reminder)
                     put(CalendarContract.Events.CALENDAR_ID, reminderCalendarId)
                     put(CalendarContract.Events.EVENT_TIMEZONE, timeZone.id)
-                    // TODO: private or not?  put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
+                    put(CalendarContract.Events.ACCESS_LEVEL, CalendarContract.Events.ACCESS_PRIVATE)
                     put(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_TENTATIVE)
                 }
                 val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)

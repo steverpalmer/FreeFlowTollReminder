@@ -13,7 +13,8 @@ class TollRoad(node: Node) {
 
     private val logger = KotlinLogging.logger {}
 
-    lateinit var name: String
+    private lateinit var _name: String
+    val name get() = _name
     private lateinit var position: Location
     private var radius: Float = 0.0f
 
@@ -27,7 +28,7 @@ class TollRoad(node: Node) {
                 // TODO XML Error detection and handling
                 when (childNode.tagName) {
                     "name" -> {
-                        name = childNode.textContent
+                        _name = childNode.textContent
                     }
                     "gpl:GPL_CoordinateTuple" -> {
                         val coordinates = childNode.textContent.trim().split(whiteSpaceRegex)
@@ -84,16 +85,26 @@ class TollRoad(node: Node) {
         return result
     }
 
-    data class Proximity(private var _intervalMilliseconds: Long, private var _priority: Int) {
+    data class Proximity(private var _intervalMilliseconds: Long, private var _priority: Int): Comparable<Proximity> {
 
         val intervalMilliseconds get() = _intervalMilliseconds
         val priority get() = _priority
 
-        fun updateIfNearer(other: Proximity) {
-            if (other._intervalMilliseconds < _intervalMilliseconds)
-                _intervalMilliseconds = other._intervalMilliseconds
-            if (other._priority < _priority)
-                _priority = other._priority
+        override fun equals(other: Any?): Boolean {
+            return when(other) {
+                is Proximity ->
+                    (_intervalMilliseconds == other._intervalMilliseconds) && (_priority == other._priority)
+                else ->
+                    false
+            }
+        }
+
+        override fun hashCode(): Int {
+            return _intervalMilliseconds.hashCode() * 31 + _priority
+        }
+
+        override fun compareTo(other: Proximity): Int {
+            return _intervalMilliseconds.compareTo(other._intervalMilliseconds)
         }
 
         companion object {
@@ -103,17 +114,20 @@ class TollRoad(node: Node) {
         }
     }
 
-    fun proximity(): Proximity
-    {
-        logger.trace { "proximity() started" }
+    fun lastLocationProximity(): Proximity {
+        logger.trace { "lastLocationProximity() started" }
         val d = distance - radius
         val result = when {
-            d <  1_500.0f -> Proximity.closeBy
+            d <  1_000.0f -> Proximity.closeBy
             d < 20_000.0f -> Proximity.inCity
-            else         -> Proximity.farFarAway
+            else          -> Proximity.farFarAway
         }
-        logger.trace { "proximity() returns $result" }
+        logger.trace { "lastLocationProximity() returns $result" }
         return result
+    }
+
+    override fun toString(): String {
+        return "TollRoad(\"$_name\")"
     }
 
     companion object {

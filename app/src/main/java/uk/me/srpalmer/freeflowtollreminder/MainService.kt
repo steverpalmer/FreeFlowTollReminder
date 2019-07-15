@@ -97,21 +97,15 @@ class MainService : Service(){
             }
 
         override fun onLocationResult(locationResult: LocationResult?) {
-            logger.trace { "onLocationResult started" }
+            logger.trace { "onLocationResult($locationResult) started" }
             locationResult ?: return
             for (location in locationResult.locations)
-                for (tollRoad in tollRoads) {
-                    val tollDue = tollRoad.isTollDue(location)
-                    if (tollDue != null) {
-                        logger.info { "Toll due: ${tollDue.reminder}" }
-                        calendarUpdater.addReminder(tollDue)
-                    }
+                (tollRoads.map { it.isTollDue(location) }).filterNotNull().forEach {
+                    logger.info { "Toll due: ${it.reminder}" }
+                    calendarUpdater.addReminder(it)
                 }
-            val nearestTollRoadProximity = TollRoad.Proximity.farFarAway
-            for (tollRoad in tollRoads)
-                nearestTollRoadProximity.updateIfNearer(tollRoad.proximity())
-            proximity = nearestTollRoadProximity
-            logger.trace { "onLocationResult stopped" }
+            proximity = (tollRoads.map {it.lastLocationProximity()}).min()
+            logger.trace { "onLocationResult(...) stopped" }
         }
     }
 
@@ -124,8 +118,10 @@ class MainService : Service(){
                 if (value != null) {
                     locationRequest.apply {
                         interval = value.intervalMilliseconds
-                        fastestInterval = value.intervalMilliseconds
-                        priority = value.priority
+                        maxWaitTime = value.intervalMilliseconds
+                        fastestInterval = TollRoad.Proximity.closeBy.intervalMilliseconds
+                        priority = TollRoad.Proximity.closeBy.priority // FIXME: fudge for simulator value.priority
+                        smallestDisplacement = 20.0f
                     }
                     val locationSettingsRequest = LocationSettingsRequest.Builder()
                         .addLocationRequest(locationRequest)
@@ -137,6 +133,7 @@ class MainService : Service(){
                             logger.debug { "location settings response: $locationSettingsResponse" }
                         }
                     }
+                    logger.debug { "locationRequest: $locationRequest" }
                     locationCallback.armed = true
                 }
                 field = value

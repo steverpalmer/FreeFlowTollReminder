@@ -20,7 +20,7 @@
   <logger name="uk.me.srpalmer.freeflowtollreminder.MainService" level="INFO" />
   <logger name="uk.me.srpalmer.freeflowtollreminder.CalendarUpdater" level="INFO" />
   <logger name="uk.me.srpalmer.freeflowtollreminder.model.TollRoad" level="INFO" />
-  <root level="DEBUG">
+  <root level="WARN">
     <appender-ref ref="LOGCAT" />
     <appender-ref ref="FILE" />
   </root>

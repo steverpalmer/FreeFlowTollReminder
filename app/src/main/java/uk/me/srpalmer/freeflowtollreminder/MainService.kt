@@ -120,7 +120,7 @@ class MainService : Service(){
                         interval = value.intervalMilliseconds
                         maxWaitTime = value.intervalMilliseconds
                         fastestInterval = TollRoad.Proximity.closeBy.intervalMilliseconds
-                        priority = TollRoad.Proximity.closeBy.priority // FIXME: fudge for simulator value.priority
+                        priority = if (false) value.priority else TollRoad.Proximity.closeBy.priority // FIXME: fudge for simulator
                         smallestDisplacement = 20.0f
                     }
                     val locationSettingsRequest = LocationSettingsRequest.Builder()
@@ -143,6 +143,7 @@ class MainService : Service(){
 
     override fun onCreate() {
         logger.trace { "onCreate() started" }
+        logger.info { "Service Started" }
 
         logger.trace { "Notification Stuff" }
         val notificationChannel = NotificationChannel(
@@ -209,6 +210,7 @@ class MainService : Service(){
             calendarUpdater.onDestroy(this)
             commit()
         }
+        logger.info { "Service Stopped" }
         logger.trace { "onDestroy() stopped" }
     }
 

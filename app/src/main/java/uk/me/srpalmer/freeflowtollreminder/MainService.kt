@@ -65,9 +65,9 @@ class MainService : Service(){
     private val locationRequest by lazy { LocationRequest.create() }
 
     private val locationCallback = object : LocationCallback() {
-        var armed = false
+        var updatesRequested = false
             set(value) {
-                logger.trace { "locationCallback.setArmed($value) started" }
+                logger.trace { "locationCallback.setUpdatesRequested($value) started" }
                 if (field != value)
                 {
                     if (!value)
@@ -93,7 +93,7 @@ class MainService : Service(){
                     }
                     field = value
                 }
-                logger.trace { "locationCallback.setArmed($value) stopped" }
+                logger.trace { "locationCallback.setUpdatesRequested($value) stopped" }
             }
 
         override fun onLocationResult(locationResult: LocationResult?) {
@@ -114,7 +114,7 @@ class MainService : Service(){
             logger.trace { "setProximity($value) started" }
             if (field != value ) {
                 logger.info { "Proximity updated to: $value" }
-                locationCallback.armed = false
+                locationCallback.updatesRequested = false
                 if (value != null) {
                     locationRequest.apply {
                         interval = value.intervalMilliseconds
@@ -134,7 +134,7 @@ class MainService : Service(){
                         }
                     }
                     logger.debug { "locationRequest: $locationRequest" }
-                    locationCallback.armed = true
+                    locationCallback.updatesRequested = true
                 }
                 field = value
             }

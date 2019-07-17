@@ -8,7 +8,7 @@
             <name>Test</name>
             <gpl:GPL_CoordinateTuple>
                 <gpl:tuple srsName="urn:ogc:def:crs:EPSG:6.6:4326">
-                    54.200374 -2.724058
+                    54.016717 -2.251092
                 </gpl:tuple>
             </gpl:GPL_CoordinateTuple>
             <proximity_meters>200.0</proximity_meters>

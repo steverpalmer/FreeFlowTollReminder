@@ -1,4 +1,1 @@
-TODO: Get the app running on my phone
-TODO: Worry about restart while on the bridge
-TODO: Toast status?
-TODO: Worry about having to run Maps to make work
+TODO: Add outer geofence to automatically start app?

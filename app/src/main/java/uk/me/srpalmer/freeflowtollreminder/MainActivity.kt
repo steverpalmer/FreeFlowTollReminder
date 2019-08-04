@@ -85,11 +85,12 @@ class MainActivity : ServiceConnection, AppCompatActivity() {
             logger.trace { "finishButton.onClick(...) stopped" }
         }
 
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR)
-            != PackageManager.PERMISSION_GRANTED)
-            logger.error { "Don't have permission to read calendar" }
-        else
-            calendarSelection.onItemSelectedListener = CalendarSelector()
+        when (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR)) {
+            PackageManager.PERMISSION_GRANTED ->
+                calendarSelection.onItemSelectedListener = CalendarSelector()
+            PackageManager.PERMISSION_DENIED ->
+                logger.error { "Don't have permission to read calendar" }
+        }
 
         logger.trace { "onCreate(...) stopped" }
     }

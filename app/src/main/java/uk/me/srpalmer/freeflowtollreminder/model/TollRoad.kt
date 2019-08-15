@@ -65,7 +65,7 @@ class TollRoad(node: Node) {
                 logger.info { "Departing $name" }
                 val whenMilliseconds = Calendar.getInstance(timeZone).run {
                     timeInMillis = location.time
-                    add(Calendar.DAY_OF_MONTH, 2)
+                    add(Calendar.DAY_OF_MONTH, 2)  // TODO: maybe better to use (HOUR_OF_DAY, 47)
                     set(Calendar.HOUR_OF_DAY, 0)
                     set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)

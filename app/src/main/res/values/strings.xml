@@ -1,12 +1,12 @@
 <!-- Copyright 2019 Steve Palmer -->
 <resources>
     <string name="app_name">FreeFlowTollReminder</string>
-    <string name="calendarLabel">Calendar</string>
+    <string name="calendarLabel">Calendar Selection:</string>
     <string name="finishButton">Finish</string>
     <string name="channel_name">Free Flow Toll Reminder Channel</string>
     <string name="channel_description">Free Flow Toll Reminder Channel Description</string>
     <string name="description">This app monitors your location and when it detects that you have used a known free flow
-        toll road, it adds an entry to your selected calendar to remind you to pay the toll.\n
-        The service continues, even if you close this window, until you click FINISH below.
+        toll road, it adds an entry to your selected calendar to remind you to pay the toll.
     </string>
+    <string name="finish_description">The service continues, even if you close this window, until you click FINISH below.</string>
 </resources>

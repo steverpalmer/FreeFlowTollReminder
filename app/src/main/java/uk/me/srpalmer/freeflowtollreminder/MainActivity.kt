@@ -10,145 +10,135 @@ import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
-import android.provider.CalendarContract
-import android.support.v4.content.ContextCompat
+import android.support.v4.app.ActivityCompat
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import mu.KotlinLogging
 
-class MainActivity : ServiceConnection, AppCompatActivity() {
+class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
 
     private val logger = KotlinLogging.logger {}
 
-    var serviceBinder: MainService.MainServiceBinder? = null
+    private var permissionsList: List<String>? = null
+    private var awaitingPermissions: Boolean = false
+    private var serviceComponentName: ComponentName? = null  // TODO: This could be removed
+    private var serviceBinder: MainService.MainServiceBinder? = null
 
-    data class CalendarInfo (val id: Long, val name: String)
-    val calendarInfoList: List<CalendarInfo> by lazy {
-        logger.trace { "calendarInfoList Construction started" }
-        val cursor = contentResolver.query(
-            CalendarContract.Calendars.CONTENT_URI,
-            arrayOf(
-                CalendarContract.Calendars._ID,
-                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME),
-            null,
-            null,
-            null
-        ) ?: throw Exception("failed to access calendar")
-        val list: MutableList<CalendarInfo> = mutableListOf()
-        if (cursor.moveToFirst())
-        {
-            do {
-                list.add(CalendarInfo(cursor.getLong(0), cursor.getString(1)))
-            } while (cursor.moveToNext())
-            cursor.close()
-        }
-        logger.trace { "calendarInfoList Construction stopped" }
-        list
+    override fun onCreate(savedInstanceState: Bundle?) {
+        logger.trace { "MainActivity.onCreate(...) started" }
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        logger.trace { "MainActivity.onCreate(...) stopped" }
     }
 
-    inner class CalendarSelector: AdapterView.OnItemSelectedListener {
+    private fun startMainService() {
+        logger.trace { "MainActivity.startMainService() started" }
+        val newServiceComponentName = startForegroundService(Intent(this, MainService::class.java))!!
+        serviceComponentName = newServiceComponentName
+        bindService(Intent(this, MainService::class.java), this, Context.BIND_AUTO_CREATE)
+        logger.trace { "MainActivity.startMainService() stopped" }
+    }
 
-        init {
-            logger.trace { "CalendarSelector Construction started" }
-            calendarSelection.visibility = View.INVISIBLE
-            val calendarNameArray = Array(calendarInfoList.size) { i -> calendarInfoList[i].name }
-            calendarSelection.adapter = ArrayAdapter(
-                this@MainActivity,
-                android.R.layout.simple_spinner_item,
-                calendarNameArray)
-            logger.trace { "CalendarSelector Construction stopped" }
+    private val finishListener = object : View.OnClickListener {
+
+        override fun onClick(v: View?) {
+            logger.trace { "finishButton.onClick(...) started" }
+            onFinishRequest()
+            logger.trace { "finishButton.onClick(...) stopped" }
         }
+    }
+
+    private val calendarSelectorListener = object : AdapterView.OnItemSelectedListener {
 
         override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-            logger.trace { "CalendarSelector.onItemSelected(_, $position, _) started" }
-            serviceBinder?.calendarId = calendarInfoList[position].id
-            logger.trace { "CalendarSelector.onItemSelected(_, $position, _) stopped" }
+            logger.trace { "CalendarSelector.onItemSelected(..., $position, $id) started" }
+            serviceBinder?.calendarPosition = position
+            logger.trace { "CalendarSelector.onItemSelected(..., $position, $id) stopped" }
         }
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
             logger.trace { "CalendarSelector.onItemSelected(...) started" }
-            serviceBinder?.calendarId = CALENDAR_ID_UNDEFINED
+            // serviceBinder?.calendarId = CALENDAR_ID_UNDEFINED
             logger.trace { "CalendarSelector.onItemSelected(...) stopped" }
         }
 
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        logger.trace { "onCreate(...) started" }
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        startForegroundService(Intent(this, MainService::class.java))
-        finishButton.setOnClickListener {
-            logger.trace { "finishButton.onClick(...) started" }
-            onFinishRequest()
-            logger.trace { "finishButton.onClick(...) stopped" }
+    override fun onResume() {
+        logger.trace { "MainActivity.onResume(...) started" }
+        super.onResume()
+        if (permissionsList == null) {
+            logger.debug { "Processing required permissions" }
+            val newPermissionsList = (packageManager.getPackageInfo(applicationInfo.packageName, PackageManager.GET_PERMISSIONS)
+                .requestedPermissions
+                ?.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED } ) ?: emptyList()
+            permissionsList = newPermissionsList
+            if (newPermissionsList.isNotEmpty()) {
+                requestPermissions(newPermissionsList.toTypedArray(), 666)
+                awaitingPermissions = true
+            }
         }
-
-        when (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR)) {
-            PackageManager.PERMISSION_GRANTED ->
-                calendarSelection.onItemSelectedListener = CalendarSelector()
-            PackageManager.PERMISSION_DENIED ->
-                logger.error { "Don't have permission to read calendar" }
-        }
-
-        logger.trace { "onCreate(...) stopped" }
+        if (!awaitingPermissions && serviceBinder == null)
+            startMainService()
+        finishButton.setOnClickListener(finishListener)
+        calendarSelection.onItemSelectedListener = calendarSelectorListener
+        logger.trace { "MainActivity.onResume(...) stopped" }
     }
 
-    // private val modelObserver = object: ModelObserver {}
-
-    override fun onStart() {
-        logger.trace { "onStart(...) started" }
-        super.onStart()
-        val success = bindService(
-            Intent(this, MainService::class.java),
-            this,
-            Context.BIND_AUTO_CREATE)
-        if (!success)
-            logger.error { "Failed to bind to service" }
-        logger.trace { "onStart(...) stopped" }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        logger.trace { "MainActivity.onRequestPermissionsResult($requestCode, $permissions, $grantResults) started" }
+        assert(requestCode == 666) { "Expected requestCode to be 666, but got $requestCode" }
+        startMainService()
+        logger.trace { "MainActivity.onRequestPermissionsResultCallback($requestCode, ...) stopped" }
     }
 
     override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
-        logger.trace { "onServiceConnected(...) started" }
-        serviceBinder = iBinder as MainService.MainServiceBinder
-        logger.trace { "searching for calendar" }
-        var position = -1
-        for ((id, _) in calendarInfoList) {
-            position++
-            if (id == serviceBinder?.calendarId) {
-                calendarSelection.setSelection(position)
-                break
+        logger.trace { "MainActivity.onServiceConnected(...) started" }
+        assert(serviceComponentName == name) { "Unexpected ComponentName: $name" }
+        when (iBinder) {
+            is MainService.MainServiceBinder -> {
+                serviceBinder = iBinder
+                logger.debug { "Displaying Toll Road List" }
+                tollRoadList.text = ((iBinder.tollRoadList().fold(StringBuilder("Known toll roads:")) {
+                        sb, s -> sb.append("\n• ").append(s) }).toString())
+                tollRoadList.visibility = View.VISIBLE
+                logger.debug { "Displaying calendar selector" }
+                calendarSelection.adapter = ArrayAdapter(
+                    this,
+                    android.R.layout.simple_spinner_item,
+                    iBinder.calendarList.toTypedArray())
+                if (iBinder.calendarPosition != -1)
+                    calendarSelection.setSelection(iBinder.calendarPosition)
+                calendarSelection.visibility = View.VISIBLE
             }
+            else ->
+                logger.error { "Unxxpected iBinder type: $iBinder" }
         }
-        calendarSelection.visibility = View.VISIBLE
-        logger.trace { "onServiceConnected(...) stopped" }
+        logger.trace { "MainActivity.onServiceConnected(...) stopped" }
+    }
+
+    override fun onPause() {
+        logger.trace { "MainActivity.onPause() started" }
+        super.onPause()
+        calendarSelection.onItemSelectedListener = null
+        finishButton.setOnClickListener(null)
+        logger.trace { "MainActivity.onPause() stopped" }
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
-        logger.trace { "onServiceDisconnected(...) started" }
-        calendarSelection.visibility = View.INVISIBLE
+        logger.trace { "MainActivity.onServiceDisconnected(...) started" }
+        assert(serviceComponentName == name) { "Unexpected ComponentName: $name" }
         serviceBinder = null
-        logger.trace { "onServiceDisconnected(...) stopped" }
-    }
-
-    override fun onStop() {
-        logger.trace { "OnStop() started" }
-        super.onStop()
-        unbindService(this)
-        logger.trace { "OnStop() stopped" }
-    }
-
-    override fun onDestroy() {
-        logger.trace { "onDestroy() started" }
-        super.onDestroy()
-        logger.trace { "onDestroy() stopped" }
+        onFinishRequest()
+        logger.trace { "MainActivity.onServiceDisconnected(...) stopped" }
     }
 
     private fun onFinishRequest() {
-        logger.trace { "onFinishRequest() started" }
+        logger.trace { "MainActivity.onFinishRequest() started" }
         serviceBinder?.onFinishRequest()
         finish()
-        logger.trace { "onFinishRequest() stopped" }
+        logger.trace { "MainActivity.onFinishRequest() stopped" }
     }
+
 }

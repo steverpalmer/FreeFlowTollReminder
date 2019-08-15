@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
-import android.support.v4.content.ContextCompat
 import com.google.android.gms.location.*
 import mu.KotlinLogging
 import org.w3c.dom.Element
@@ -29,7 +28,7 @@ class MainService : Service(){
     }
 
     private val tollRoads: List<TollRoad> by lazy {
-        logger.trace { "Initializing tollRoads" }
+        logger.trace { "Initializing MainService.tollRoads" }
         val result = mutableListOf<TollRoad>()
         try {
             val xmlStream = resources.openRawResource(R.raw.configuration)
@@ -41,21 +40,22 @@ class MainService : Service(){
             val xPathFactory = XPathFactory.newInstance()
             val xPath = xPathFactory.newXPath()
             val tollRoadsElements = xPath.evaluate("/configuration/toll_roads/toll_road", doc, XPathConstants.NODESET) as NodeList
-            for (i in 0 until tollRoadsElements.length) {
-                if (tollRoadsElements.item(i).nodeType == Node.ELEMENT_NODE) {
-                    val tollRoadElement = tollRoadsElements.item(i) as Element
-                    val tollRoad = TollRoad(tollRoadElement)
-                    result.add(tollRoad)
-                }
-            }
+            for (i in 0 until tollRoadsElements.length)
+                if (tollRoadsElements.item(i).nodeType == Node.ELEMENT_NODE)
+                    result.add(TollRoad(tollRoadsElements.item(i) as Element))
         } catch (e: Throwable) {
             logger.error { e.message }
         }
-        logger.trace { "tollRoads Initialized" }
+        logger.trace { "MainService.tollRoads Initialized: $result" }
         result
     }
 
-    private val calendarUpdater by lazy { CalendarUpdater(contentResolver) }
+    private val calendarUpdater by lazy {
+        logger.trace { "Initializing calendarUpdater" }
+        val result = CalendarUpdater(this)
+        logger.trace { "calendarUpdater Initialized" }
+        result
+    }
 
     private val notificationId = 666  // TODO: check what numbers should be used
 
@@ -67,9 +67,10 @@ class MainService : Service(){
     private val locationCallback = object : LocationCallback() {
         var updatesRequested = false
             set(value) {
-                logger.trace { "locationCallback.setUpdatesRequested($value) started" }
+                logger.trace { "MainService.locationCallback.setUpdatesRequested($value) started" }
                 if (field != value)
                 {
+                    logger.info { "MainService.locationCallback.UpdatesRequested updated to: $value" }
                     if (!value)
                         fusedLocationProviderClient.removeLocationUpdates(this).apply {
                             addOnFailureListener { exception ->
@@ -93,25 +94,26 @@ class MainService : Service(){
                     }
                     field = value
                 }
-                logger.trace { "locationCallback.setUpdatesRequested($value) stopped" }
+                logger.trace { "MainService.locationCallback.setUpdatesRequested($value) stopped" }
             }
 
         override fun onLocationResult(locationResult: LocationResult?) {
-            logger.trace { "onLocationResult($locationResult) started" }
-            locationResult ?: return
-            for (location in locationResult.locations)
-                (tollRoads.map { it.isTollDue(location) }).filterNotNull().forEach {
-                    logger.info { "Toll due: ${it.reminder}" }
-                    calendarUpdater.addReminder(it)
-                }
-            proximity = (tollRoads.map {it.lastLocationProximity()}).min()
-            logger.trace { "onLocationResult(...) stopped" }
+            logger.trace { "MainService.onLocationResult($locationResult) started" }
+            if (locationResult != null) {
+                for (location in locationResult.locations)
+                    (tollRoads.map { it.isTollDue(location) }).filterNotNull().forEach {
+                        logger.info { "Toll due: ${it.reminder}" }
+                        calendarUpdater.addReminder(it)
+                    }
+                proximity = (tollRoads.map {it.lastLocationProximity()}).min()
+            }
+            logger.trace { "MainService.onLocationResult(...) stopped" }
         }
     }
 
     private var proximity: TollRoad.Proximity? = null
         set(value) {
-            logger.trace { "setProximity($value) started" }
+            logger.trace { "MainService.setProximity($value) started" }
             if (field != value ) {
                 logger.info { "Proximity updated to: $value" }
                 locationCallback.updatesRequested = false
@@ -138,11 +140,11 @@ class MainService : Service(){
                 }
                 field = value
             }
-            logger.trace { "setProximity($value) stopped" }
+            logger.trace { "MainService.setProximity($value) stopped" }
         }
 
     override fun onCreate() {
-        logger.trace { "onCreate() started" }
+        logger.trace { "MainService.onCreate() started" }
         logger.info { "Service Started" }
 
         logger.trace { "Notification Stuff" }
@@ -163,7 +165,7 @@ class MainService : Service(){
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID).apply {
             setSmallIcon(R.mipmap.toll_launcher)
             setContentTitle("Free Flow Toll Reminder")
-            setContentText("Monitor when you use Toll road and create a reminder to pay")
+            setContentText("Monitoring location for toll road use.")
             priority = NotificationCompat.PRIORITY_DEFAULT
             setContentIntent(notificationIntent)
         }
@@ -172,58 +174,51 @@ class MainService : Service(){
         startForeground(notificationId, notificationBuilder.build())
 
         logger.trace { "Calender Stuff" }
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_CALENDAR) != PackageManager.PERMISSION_GRANTED)
-            logger.error { "Don't have permission to update calendar" }
-        else
-            calendarUpdater.onCreate(sharedPreferences)
+        calendarUpdater.onCreate(sharedPreferences)
 
         logger.trace { "Location Stuff" }
-        when {
-            tollRoads.isEmpty()
-                -> logger.error { "No Toll Roads defined" }
-            ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                -> logger.error { "Don't have permission to access fine location" }
-            else
-                -> proximity = TollRoad.Proximity.closeBy  // get accurate first reading
-        }
+        proximity = TollRoad.Proximity.closeBy  // get accurate first reading
 
-        logger.trace { "onCreate() stopped" }
+        logger.trace { "MainService.onCreate() stopped" }
     }
 
     inner class MainServiceBinder: Binder() {
-        var calendarId
-            get () = calendarUpdater.calendarId
-            set (value) {calendarUpdater.calendarId = value}
+        fun tollRoadList() = tollRoads.map { it.name }
+        val calendarList = calendarUpdater.calendarInfoList.map { it.name }
+        var calendarPosition
+            get () = calendarUpdater.calendarPosition
+            set (value) {calendarUpdater.calendarPosition = value}
         fun onFinishRequest() = this@MainService.onFinishRequest()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        logger.trace { "onBind(...) called" }
+        logger.trace { "MainService.onBind(...) called" }
         return MainServiceBinder()
+    }
+
+    fun onFinishRequest() {
+        // TODO: Worry about thread safety
+        logger.trace { "MainService.onFinishRequest() started" }
+        stopForeground(true)
+        stopSelf()
+        logger.trace { "MainService.onFinishRequest() stopped" }
     }
 
     @SuppressLint("ApplySharedPref")
     override fun onDestroy() {
-        logger.trace { "onDestroy() started" }
+        logger.trace { "MainService.onDestroy() started" }
         proximity = null
         sharedPreferences.edit().apply {
             calendarUpdater.onDestroy(this)
             commit()
         }
         logger.info { "Service Stopped" }
-        logger.trace { "onDestroy() stopped" }
-    }
-
-    fun onFinishRequest() {
-        // TODO: Worry about thread safety
-        logger.trace { "onFinishRequest() started" }
-        stopForeground(true)
-        stopSelf()
-        logger.trace { "onFinishRequest() stopped" }
+        logger.trace { "MainService.onDestroy() stopped" }
     }
 
     companion object {
         const val CHANNEL_ID = "uk.me.srpalmer.freeflowtollreminder.CHANNEL_ID"
         const val SHARED_PREFERENCES_FILE_NAME = "uk.me.srpalmer.freeflowtollreminder.MODEL_PREFERENCES"
     }
+
 }

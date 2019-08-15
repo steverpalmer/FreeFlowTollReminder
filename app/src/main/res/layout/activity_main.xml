@@ -9,21 +9,23 @@
         tools:context=".MainActivity">
 
     <Spinner
-            android:layout_width="297dp"
-            android:layout_height="43dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:id="@+id/calendarSelection"
             android:visibility="invisible"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="16dp" app:layout_constraintTop_toBottomOf="@+id/textView2"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginEnd="16dp" app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="16dp" android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@+id/calendarFieldTag"/>
     <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/calendarLabel"
-            app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginStart="16dp" android:id="@+id/calendarFieldTag"
-            android:layout_marginTop="24dp" app:layout_constraintTop_toTopOf="@+id/calendarSelection"
-            app:layout_constraintEnd_toStartOf="@+id/calendarSelection" android:layout_marginEnd="16dp"/>
+            android:id="@+id/calendarFieldTag"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintHorizontal_bias="0.062"
+            android:layout_marginTop="16dp" app:layout_constraintTop_toBottomOf="@+id/tollRoadList"
+            android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
     <Button
             android:text="@string/finishButton"
             android:layout_width="wrap_content"
@@ -36,7 +38,7 @@
             android:text="@string/description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:id="@+id/textView"
+            android:id="@+id/description"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" android:layout_marginTop="16dp"
             app:layout_constraintTop_toTopOf="parent" android:layout_marginEnd="16dp"
@@ -45,9 +47,17 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-            android:id="@+id/textView2" android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@+id/textView" android:layout_marginEnd="16dp"
+            android:id="@+id/tollRoadList" android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@+id/description" android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
-            android:text="The known free flow toll roads are:\n• Mersey Gateway Bridge\n• Silver Jubilee Bridge"/>
+            tools:visibility="invisible"/>
+    <TextView
+            android:text="@string/finish_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+            android:id="@+id/finish_description" android:layout_marginBottom="16dp"
+            app:layout_constraintBottom_toTopOf="@+id/finishButton" android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"/>
 
 </android.support.constraint.ConstraintLayout>

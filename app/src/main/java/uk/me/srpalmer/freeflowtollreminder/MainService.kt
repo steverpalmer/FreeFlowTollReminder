@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
@@ -66,6 +65,7 @@ class MainService : Service(){
 
     private val locationCallback = object : LocationCallback() {
         var updatesRequested = false
+            @SuppressLint("MissingPermission")  // Missing Permission caught in task failure
             set(value) {
                 logger.trace { "MainService.locationCallback.setUpdatesRequested($value) started" }
                 if (field != value)
@@ -80,18 +80,15 @@ class MainService : Service(){
                                 logger.debug { "removeLocationUpdates success" }
                             }
                         }
-                    else try {
+                    else
                         fusedLocationProviderClient.requestLocationUpdates(locationRequest, this, null).apply {
-                            addOnFailureListener { exception ->
-                                logger.error { "requestLocationUpdates failure: $exception" }
-                            }
-                            addOnSuccessListener {
-                                logger.debug { "requestLocationUpdates success" }
+                            addOnCompleteListener { task ->
+                                if (!task.isSuccessful) {
+                                    logger.error { "Failed to setup location updates" }
+                                    onFinishRequest()
+                                }
                             }
                         }
-                    } catch (exception: SecurityException) {
-                        logger.error { "requestLocationUpdates failure: $exception" }
-                    }
                     field = value
                 }
                 logger.trace { "MainService.locationCallback.setUpdatesRequested($value) stopped" }
@@ -125,16 +122,8 @@ class MainService : Service(){
                         priority = if (false) value.priority else TollRoad.Proximity.closeBy.priority // FIXME: fudge for simulator
                         smallestDisplacement = 20.0f
                     }
-                    val locationSettingsRequest = LocationSettingsRequest.Builder()
-                        .addLocationRequest(locationRequest)
-                    settingsClient.checkLocationSettings(locationSettingsRequest.build()).apply {
-                        addOnFailureListener { exception ->
-                            logger.error { "location settings error: $exception" }
-                        }
-                        addOnSuccessListener { locationSettingsResponse ->
-                            logger.debug { "location settings response: $locationSettingsResponse" }
-                        }
-                    }
+                    val locationSettingsRequest = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+                    settingsClient.checkLocationSettings(locationSettingsRequest.build())
                     logger.debug { "locationRequest: $locationRequest" }
                     locationCallback.updatesRequested = true
                 }

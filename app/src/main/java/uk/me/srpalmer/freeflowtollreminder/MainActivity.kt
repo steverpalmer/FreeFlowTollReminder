@@ -36,7 +36,9 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
         logger.trace { "MainActivity.startMainService() started" }
         val newServiceComponentName = startForegroundService(Intent(this, MainService::class.java))!!
         serviceComponentName = newServiceComponentName
-        bindService(Intent(this, MainService::class.java), this, Context.BIND_AUTO_CREATE)
+        val rc = bindService(Intent(this, MainService::class.java), this,
+            Context.BIND_ABOVE_CLIENT or Context.BIND_NOT_FOREGROUND)
+        assert (rc) { "Failed to bind to service" }
         logger.trace { "MainActivity.startMainService() stopped" }
     }
 
@@ -44,7 +46,8 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
         override fun onClick(v: View?) {
             logger.trace { "finishButton.onClick(...) started" }
-            onFinishRequest()
+            serviceBinder?.onFinishRequest()
+            // finish()
             logger.trace { "finishButton.onClick(...) stopped" }
         }
     }
@@ -118,27 +121,27 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
         logger.trace { "MainActivity.onServiceConnected(...) stopped" }
     }
 
+    override fun onServiceDisconnected(name: ComponentName?) {
+        logger.trace { "MainActivity.onServiceDisconnected(...) started" }
+        assert(serviceComponentName == name) { "Unexpected ComponentName: $name" }
+        if (serviceBinder != null) {
+            unbindService(this)
+            serviceBinder = null
+        }
+        finish()
+        logger.trace { "MainActivity.onServiceDisconnected(...) stopped" }
+    }
+
     override fun onPause() {
         logger.trace { "MainActivity.onPause() started" }
         super.onPause()
         calendarSelection.onItemSelectedListener = null
         finishButton.setOnClickListener(null)
+        if (serviceBinder != null) {
+            unbindService(this)
+            serviceBinder = null
+        }
         logger.trace { "MainActivity.onPause() stopped" }
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        logger.trace { "MainActivity.onServiceDisconnected(...) started" }
-        assert(serviceComponentName == name) { "Unexpected ComponentName: $name" }
-        serviceBinder = null
-        onFinishRequest()
-        logger.trace { "MainActivity.onServiceDisconnected(...) stopped" }
-    }
-
-    private fun onFinishRequest() {
-        logger.trace { "MainActivity.onFinishRequest() started" }
-        serviceBinder?.onFinishRequest()
-        finish()
-        logger.trace { "MainActivity.onFinishRequest() stopped" }
     }
 
 }

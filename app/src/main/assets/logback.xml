@@ -16,9 +16,9 @@
             <pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>
         </encoder>
     </appender -->
-    <logger name="uk.me.srpalmer.freeflowtollreminder.MainActivity"    level="TRACE" />
-    <logger name="uk.me.srpalmer.freeflowtollreminder.MainService"     level="TRACE" />
-    <logger name="uk.me.srpalmer.freeflowtollreminder.CalendarUpdater" level="TRACE" />
+    <logger name="uk.me.srpalmer.freeflowtollreminder.MainActivity"    level="INFO" />
+    <logger name="uk.me.srpalmer.freeflowtollreminder.MainService"     level="INFO" />
+    <logger name="uk.me.srpalmer.freeflowtollreminder.CalendarUpdater" level="INFO" />
     <logger name="uk.me.srpalmer.freeflowtollreminder.model.TollRoad"  level="INFO" />
     <root level="WARN">
         <appender-ref ref="LOGCAT" />

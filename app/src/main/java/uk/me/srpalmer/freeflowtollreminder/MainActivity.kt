@@ -62,7 +62,7 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
         override fun onNothingSelected(parent: AdapterView<*>?) {
             logger.trace { "CalendarSelector.onItemSelected(...) started" }
-            // serviceBinder?.calendarId = CALENDAR_ID_UNDEFINED
+            serviceBinder?.calendarId = CALENDAR_ID_UNDEFINED
             logger.trace { "CalendarSelector.onItemSelected(...) stopped" }
         }
 
@@ -107,16 +107,14 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
                         sb, s -> sb.append("\n• ").append(s) }).toString())
                 tollRoadList.visibility = View.VISIBLE
                 logger.debug { "Displaying calendar selector" }
-                calendarSelection.adapter = ArrayAdapter(
-                    this,
-                    android.R.layout.simple_spinner_item,
-                    iBinder.calendarList.toTypedArray())
+                val calendarList = iBinder.calendarList
+                calendarSelection.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, calendarList.toTypedArray())
                 if (iBinder.calendarPosition != -1)
                     calendarSelection.setSelection(iBinder.calendarPosition)
                 calendarSelection.visibility = View.VISIBLE
             }
             else ->
-                logger.error { "Unxxpected iBinder type: $iBinder" }
+                logger.error { "Unexpected iBinder type: $iBinder" }
         }
         logger.trace { "MainActivity.onServiceConnected(...) stopped" }
     }

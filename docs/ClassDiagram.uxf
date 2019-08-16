@@ -283,7 +283,7 @@ whenMilliseconds: Long</panel_attributes>
       <w>240</w>
       <h>104</h>
     </coordinates>
-    <panel_attributes>&lt;&lt;Comparible&gt;&gt;
+    <panel_attributes>&lt;&lt;Comparable&gt;&gt;
 TollRoad.Proximity
 --
 intervalMilliseconds: Long

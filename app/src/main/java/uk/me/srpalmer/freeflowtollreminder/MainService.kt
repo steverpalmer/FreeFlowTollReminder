@@ -73,11 +73,9 @@ class MainService : Service(){
                     logger.info { "MainService.locationCallback.UpdatesRequested updated to: $value" }
                     if (!value)
                         fusedLocationProviderClient.removeLocationUpdates(this).apply {
-                            addOnFailureListener { exception ->
-                                logger.error { "removeLocationUpdates failure: $exception" }
-                            }
-                            addOnSuccessListener {
-                                logger.debug { "removeLocationUpdates success" }
+                            addOnCompleteListener { task ->
+                                if (!task.isSuccessful)
+                                    logger.error { "Failed to remove location updates" }
                             }
                         }
                     else
@@ -119,7 +117,7 @@ class MainService : Service(){
                         interval = value.intervalMilliseconds
                         maxWaitTime = value.intervalMilliseconds
                         fastestInterval = TollRoad.Proximity.closeBy.intervalMilliseconds
-                        priority = if (false) value.priority else TollRoad.Proximity.closeBy.priority // FIXME: fudge for simulator
+                        priority = value.priority  // FIXME: for simulator use TollRoad.Proximity.closeBy.priority
                         smallestDisplacement = 20.0f
                     }
                     val locationSettingsRequest = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
@@ -174,9 +172,12 @@ class MainService : Service(){
     inner class MainServiceBinder: Binder() {
         fun tollRoadList() = tollRoads.map { it.name }
         val calendarList = calendarUpdater.calendarInfoList.map { it.name }
+        var calendarId
+            get() = calendarUpdater.calendarId
+            set(value) {calendarUpdater.calendarId = value}
         var calendarPosition
-            get () = calendarUpdater.calendarPosition
-            set (value) {calendarUpdater.calendarPosition = value}
+            get() = calendarUpdater.calendarPosition
+            set(value) {calendarUpdater.calendarPosition = value}
         fun onFinishRequest() = this@MainService.onFinishRequest()
     }
 

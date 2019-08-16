@@ -5,11 +5,10 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.database.ContentObserver
-import android.net.Uri
+// import android.database.ContentObserver
+// import android.net.Uri
 import android.provider.CalendarContract
-import android.os.Handler
+// import android.os.Handler
 import mu.KotlinLogging
 import uk.me.srpalmer.freeflowtollreminder.model.TollRoad
 import java.util.*
@@ -61,9 +60,11 @@ class CalendarUpdater (private val context: Context) {
                     )
                     if (cursor != null && cursor.moveToFirst())
                     {
-                        do
-                            accumulator.add(CalendarInfo(cursor.getLong(0), cursor.getString(1)))
-                        while (cursor.moveToNext())
+                        do {
+                            val calendarName = cursor.getString(1)
+                            if (!calendarName.startsWith("Holidays"))
+                                accumulator.add(CalendarInfo(cursor.getLong(0), calendarName))
+                        } while (cursor.moveToNext())
                         cursor.close()
                     }
                 } catch (exception: SecurityException) {
@@ -107,25 +108,32 @@ class CalendarUpdater (private val context: Context) {
             logger.trace { "CalendarUpdater.calendarPosition.set($value) stopped: ($_calendarInfoList, $_calendarId, $_calendarPosition)" }
         }
 
+/*
     private val calendarsObserver = object : ContentObserver(Handler()) {
-        override fun onChange(seflChange: Boolean) {
+        override fun onChange(selfChange: Boolean) {
             logger.trace { "onChange(Boolean) started" }
             _calendarInfoList = null
             syncState()
             logger.trace { "onChange(Boolean) stopped" }
         }
 
-        override fun onChange(seflChange: Boolean, uri: Uri?) {
+        override fun onChange(selfChange: Boolean, uri: Uri?) {
             logger.trace { "onChange(Boolean, Uri) started" }
             _calendarInfoList = null
             syncState()
             logger.trace { "onChange(Boolean, Uri) stopped" }
         }
     }
+*/
 
     fun onCreate(sharedPreferences: SharedPreferences) {
         logger.trace { "CalendarUpdater.onCreate started" }
-        context.contentResolver.registerContentObserver(CalendarContract.Calendars.CONTENT_URI, false, calendarsObserver)
+        try {
+            // FIXME: This triggers updates on *any* calendar events
+            // context.contentResolver.registerContentObserver(CalendarContract.Calendars.CONTENT_URI, false, calendarsObserver)
+        } catch (e: SecurityException) {
+            logger.error { "Failed to register observer on calendar: $e" }
+        }
         calendarId = sharedPreferences.getLong(calendarIdKey, CALENDAR_ID_UNDEFINED)
         logger.trace { "CalendarUpdater.onCreate stopped" }
     }
@@ -140,13 +148,7 @@ class CalendarUpdater (private val context: Context) {
         val reminderCalendarId = calendarId
         if (reminderCalendarId == CALENDAR_ID_UNDEFINED)
             logger.error { "Calendar not identified" }
-        else if (context.checkSelfPermission(android.Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_DENIED ||
-            context.checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_DENIED) {
-            logger.error { "Can't update calendar" }
-            _calendarInfoList = null
-            syncState()
-        }
-        else {
+        else try {
             val startMillis = tollDue.whenMilliseconds - 12 * 60 * 60 * 1_000
             var oldEventId = EVENT_ID_UNDEFINED
             val searchStartMillis = startMillis - durationMillis / 2
@@ -186,6 +188,8 @@ class CalendarUpdater (private val context: Context) {
                 val uri = context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
                 logger.info { "Event \"${tollDue.reminder}\" added: ${uri?.lastPathSegment}" }
             }
+        } catch (e: SecurityException) {
+            logger.error { "Failed to add reminder to calendar $calendarId: $e" }
         }
         logger.trace { "CalendarUpdater.addReminder(...) stopped" }
     }
@@ -193,7 +197,7 @@ class CalendarUpdater (private val context: Context) {
     fun onDestroy(sharedPreferencesEditor: SharedPreferences.Editor) {
         logger.trace { "CalendarUpdater.onDestroy(...) started" }
         sharedPreferencesEditor.putLong(calendarIdKey, calendarId)
-        context.contentResolver.unregisterContentObserver(calendarsObserver)
+        // context.contentResolver.unregisterContentObserver(calendarsObserver)
         logger.trace { "CalendarUpdater.onDestroy(...) stopped" }
     }
 

@@ -22,7 +22,6 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
     private var permissionsList: List<String>? = null
     private var awaitingPermissions: Boolean = false
-    private var serviceComponentName: ComponentName? = null  // TODO: This could be removed
     private var serviceBinder: MainService.MainServiceBinder? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,8 +33,7 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
     private fun startMainService() {
         logger.trace { "MainActivity.startMainService() started" }
-        val newServiceComponentName = startForegroundService(Intent(this, MainService::class.java))!!
-        serviceComponentName = newServiceComponentName
+        startForegroundService(Intent(this, MainService::class.java))!!
         val rc = bindService(Intent(this, MainService::class.java), this,
             Context.BIND_ABOVE_CLIENT or Context.BIND_NOT_FOREGROUND)
         assert (rc) { "Failed to bind to service" }
@@ -98,7 +96,6 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
     override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
         logger.trace { "MainActivity.onServiceConnected(...) started" }
-        assert(serviceComponentName == name) { "Unexpected ComponentName: $name" }
         when (iBinder) {
             is MainService.MainServiceBinder -> {
                 serviceBinder = iBinder
@@ -121,7 +118,6 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
     override fun onServiceDisconnected(name: ComponentName?) {
         logger.trace { "MainActivity.onServiceDisconnected(...) started" }
-        assert(serviceComponentName == name) { "Unexpected ComponentName: $name" }
         if (serviceBinder != null) {
             unbindService(this)
             serviceBinder = null

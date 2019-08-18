@@ -56,8 +56,6 @@ class MainService : Service(){
         result
     }
 
-    private val notificationId = 666  // TODO: check what numbers should be used
-
     private val fusedLocationProviderClient by lazy { LocationServices.getFusedLocationProviderClient(this) }
     private val settingsClient: SettingsClient by lazy { LocationServices.getSettingsClient(this) }
 
@@ -158,7 +156,7 @@ class MainService : Service(){
         }
 
         logger.trace { "Promote to Foreground" }
-        startForeground(notificationId, notificationBuilder.build())
+        startForeground(666, notificationBuilder.build())
 
         logger.trace { "Calender Stuff" }
         calendarUpdater.onCreate(sharedPreferences)
@@ -187,7 +185,6 @@ class MainService : Service(){
     }
 
     fun onFinishRequest() {
-        // TODO: Worry about thread safety
         logger.trace { "MainService.onFinishRequest() started" }
         stopForeground(true)
         stopSelf()

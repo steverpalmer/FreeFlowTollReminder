@@ -26,6 +26,7 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         logger.trace { "MainActivity.onCreate(...) started" }
+        logger.info { "Activity Started" }
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         logger.trace { "MainActivity.onCreate(...) stopped" }
@@ -136,6 +137,13 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
             serviceBinder = null
         }
         logger.trace { "MainActivity.onPause() stopped" }
+    }
+
+    override fun onDestroy() {
+        logger.trace { "MainActivity.onDestroy() started" }
+        super.onDestroy()
+        logger.info { "Activity Stopped" }
+        logger.trace { "MainActivity.onDestroy() started" }
     }
 
 }

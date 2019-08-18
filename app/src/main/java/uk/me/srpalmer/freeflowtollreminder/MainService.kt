@@ -38,7 +38,8 @@ class MainService : Service(){
             xmlStream.close()
             val xPathFactory = XPathFactory.newInstance()
             val xPath = xPathFactory.newXPath()
-            val tollRoadsElements = xPath.evaluate("/configuration/toll_roads/toll_road", doc, XPathConstants.NODESET) as NodeList
+            val tollRoadsElements = xPath.evaluate("/configuration/toll_roads/toll_road",
+                doc, XPathConstants.NODESET) as NodeList
             for (i in 0 until tollRoadsElements.length)
                 if (tollRoadsElements.item(i).nodeType == Node.ELEMENT_NODE)
                     result.add(TollRoad(tollRoadsElements.item(i) as Element))
@@ -68,7 +69,7 @@ class MainService : Service(){
                 logger.trace { "MainService.locationCallback.setUpdatesRequested($value) started" }
                 if (field != value)
                 {
-                    logger.info { "MainService.locationCallback.UpdatesRequested updated to: $value" }
+                    logger.debug { "MainService.locationCallback.UpdatesRequested updated to: $value" }
                     if (!value)
                         fusedLocationProviderClient.removeLocationUpdates(this).apply {
                             addOnCompleteListener { task ->

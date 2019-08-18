@@ -5,10 +5,10 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
-// import android.database.ContentObserver
-// import android.net.Uri
+// import android.database.ContentObserver  - Detect Calendar Updates
+// import android.net.Uri  - Detect Calendar Updates
 import android.provider.CalendarContract
-// import android.os.Handler
+// import android.os.Handler  - Detect Calendar Updates
 import mu.KotlinLogging
 import uk.me.srpalmer.freeflowtollreminder.model.TollRoad
 import java.util.*
@@ -108,7 +108,7 @@ class CalendarUpdater (private val context: Context) {
             logger.trace { "CalendarUpdater.calendarPosition.set($value) stopped: ($_calendarInfoList, $_calendarId, $_calendarPosition)" }
         }
 
-/*
+/*  - Detect Calendar Updates
     private val calendarsObserver = object : ContentObserver(Handler()) {
         override fun onChange(selfChange: Boolean) {
             logger.trace { "onChange(Boolean) started" }
@@ -128,12 +128,13 @@ class CalendarUpdater (private val context: Context) {
 
     fun onCreate(sharedPreferences: SharedPreferences) {
         logger.trace { "CalendarUpdater.onCreate started" }
+/*  - Detect Calendar Updates
         try {
-            // FIXME: This triggers updates on *any* calendar events
-            // context.contentResolver.registerContentObserver(CalendarContract.Calendars.CONTENT_URI, false, calendarsObserver)
+            context.contentResolver.registerContentObserver(CalendarContract.Calendars.CONTENT_URI, false, calendarsObserver)
         } catch (e: SecurityException) {
             logger.error { "Failed to register observer on calendar: $e" }
         }
+*/
         calendarId = sharedPreferences.getLong(calendarIdKey, CALENDAR_ID_UNDEFINED)
         logger.trace { "CalendarUpdater.onCreate stopped" }
     }
@@ -197,7 +198,7 @@ class CalendarUpdater (private val context: Context) {
     fun onDestroy(sharedPreferencesEditor: SharedPreferences.Editor) {
         logger.trace { "CalendarUpdater.onDestroy(...) started" }
         sharedPreferencesEditor.putLong(calendarIdKey, calendarId)
-        // context.contentResolver.unregisterContentObserver(calendarsObserver)
+        // context.contentResolver.unregisterContentObserver(calendarsObserver)  - Detect Calendar Updates
         logger.trace { "CalendarUpdater.onDestroy(...) stopped" }
     }
 

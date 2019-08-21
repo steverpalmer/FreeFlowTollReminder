@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration
         xmlns:gpl="http://www.isotc211.org/2006/gpl"
-        version="0.2.0">
+        version="1.0.0">
     <toll_roads>
         <!-- toll_road>
             <name>M6 near Jct 36</name>

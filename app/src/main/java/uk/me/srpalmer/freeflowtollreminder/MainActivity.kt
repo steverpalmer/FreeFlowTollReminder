@@ -41,14 +41,11 @@ class MainActivity : ServiceConnection, AppCompatActivity(), ActivityCompat.OnRe
         logger.trace { "MainActivity.startMainService() stopped" }
     }
 
-    private val finishListener = object : View.OnClickListener {
-
-        override fun onClick(v: View?) {
-            logger.trace { "finishButton.onClick(...) started" }
-            serviceBinder?.onFinishRequest()
-            // finish()
-            logger.trace { "finishButton.onClick(...) stopped" }
-        }
+    private val finishListener = View.OnClickListener {
+        logger.trace { "finishButton.onClick(...) started" }
+        serviceBinder?.onFinishRequest()
+        // finish()
+        logger.trace { "finishButton.onClick(...) stopped" }
     }
 
     private val calendarSelectorListener = object : AdapterView.OnItemSelectedListener {

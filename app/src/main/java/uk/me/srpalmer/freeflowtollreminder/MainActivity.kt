@@ -7,10 +7,10 @@ import android.content.Intent
 import kotlinx.android.synthetic.main.activity_main.*
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
-import android.support.v4.app.ActivityCompat
+import androidx.core.app.ActivityCompat
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter

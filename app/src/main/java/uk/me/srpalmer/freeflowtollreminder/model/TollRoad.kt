@@ -4,14 +4,11 @@ package uk.me.srpalmer.freeflowtollreminder.model
 
 import android.location.Location
 import com.google.android.gms.location.LocationRequest
-import mu.KotlinLogging
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.util.*
 
 class TollRoad(node: Node) {
-
-    private val logger = KotlinLogging.logger {}
 
     private lateinit var _name: String
     val name get() = _name
@@ -19,7 +16,6 @@ class TollRoad(node: Node) {
     private var radius: Float = 0.0f
 
     init {
-        logger.trace { "XML constructor started" }
         val childNodes = node.childNodes
         val childNodesLength = childNodes.length
         for (i in 0 until childNodesLength) {
@@ -43,9 +39,6 @@ class TollRoad(node: Node) {
                 }
             }
         }
-        logger.info { "Configured $name" }
-        logger.trace { "XML constructor stopped: ${toString()}" }
-
     }
 
     data class Due(val reminder: String, val whenMilliseconds: Long)
@@ -56,13 +49,11 @@ class TollRoad(node: Node) {
     private var inUse: Boolean = false
 
     fun isTollDue(location: Location): Due? {
-        logger.trace { "isTollDue($location) started" }
         var result: Due? = null
         distance = location.distanceTo(position)
         // Uses 2σ for hysteresis to give 97.7% confidence
         if (inUse) {
             if (distance - 2 * location.accuracy > radius) {
-                logger.info { "Departing $name" }
                 val whenMilliseconds = Calendar.getInstance(timeZone).run {
                     timeInMillis = location.time
                     add(Calendar.HOUR_OF_DAY, 47)  // Little less than 2 days
@@ -78,11 +69,9 @@ class TollRoad(node: Node) {
             }
         } else {
             if (distance + 2 * location.accuracy < radius) {
-                logger.info { "Arriving $name" }
                 inUse = true
             }
         }
-        logger.trace { "isTollDue(...) returns $result" }
         return result
     }
 
@@ -100,15 +89,12 @@ class TollRoad(node: Node) {
     }
 
     fun lastLocationProximity(): Proximity {
-        logger.trace { "lastLocationProximity() started" }
         val d = distance - radius
-        val result = when {
+        return when {
             d <  1_000.0f -> Proximity.closeBy
             d < 20_000.0f -> Proximity.inCity
             else          -> Proximity.farFarAway
         }
-        logger.trace { "lastLocationProximity() returns $result" }
-        return result
     }
 
     override fun toString(): String {

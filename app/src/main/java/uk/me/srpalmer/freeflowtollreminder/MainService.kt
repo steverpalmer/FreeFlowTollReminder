@@ -9,7 +9,6 @@ import android.os.Binder
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
-import mu.KotlinLogging
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
@@ -20,14 +19,11 @@ import javax.xml.xpath.XPathFactory
 
 class MainService : Service(){
 
-    private val logger = KotlinLogging.logger {}
-
     private val sharedPreferences by lazy {
         getSharedPreferences(SHARED_PREFERENCES_FILE_NAME, Context.MODE_PRIVATE)
     }
 
     private val tollRoads: List<TollRoad> by lazy {
-        logger.trace { "Initializing MainService.tollRoads" }
         val result = mutableListOf<TollRoad>()
         try {
             val xmlStream = resources.openRawResource(R.raw.configuration)
@@ -44,16 +40,13 @@ class MainService : Service(){
                 if (tollRoadsElements.item(i).nodeType == Node.ELEMENT_NODE)
                     result.add(TollRoad(tollRoadsElements.item(i) as Element))
         } catch (e: Throwable) {
-            logger.error { e.message }
+            // Do Nothing
         }
-        logger.trace { "MainService.tollRoads Initialized: $result" }
         result
     }
 
     private val calendarUpdater by lazy {
-        logger.trace { "Initializing calendarUpdater" }
         val result = CalendarUpdater(this)
-        logger.trace { "calendarUpdater Initialized" }
         result
     }
 
@@ -66,50 +59,36 @@ class MainService : Service(){
         var updatesRequested = false
             @SuppressLint("MissingPermission")  // Missing Permission caught in task failure
             set(value) {
-                logger.trace { "MainService.locationCallback.setUpdatesRequested($value) started" }
                 if (field != value)
                 {
-                    logger.debug { "MainService.locationCallback.UpdatesRequested updated to: $value" }
                     if (!value)
-                        fusedLocationProviderClient.removeLocationUpdates(this).apply {
-                            addOnCompleteListener { task ->
-                                if (!task.isSuccessful)
-                                    logger.error { "Failed to remove location updates" }
-                            }
-                        }
+                        fusedLocationProviderClient.removeLocationUpdates(this)
                     else
                         fusedLocationProviderClient.requestLocationUpdates(locationRequest, this, null).apply {
                             addOnCompleteListener { task ->
                                 if (!task.isSuccessful) {
-                                    logger.error { "Failed to setup location updates" }
                                     onFinishRequest()
                                 }
                             }
                         }
                     field = value
                 }
-                logger.trace { "MainService.locationCallback.setUpdatesRequested($value) stopped" }
             }
 
         override fun onLocationResult(locationResult: LocationResult?) {
-            logger.trace { "MainService.onLocationResult($locationResult) started" }
             if (locationResult != null) {
                 for (location in locationResult.locations)
                     (tollRoads.map { it.isTollDue(location) }).filterNotNull().forEach {
-                        logger.info { "Toll due: ${it.reminder}" }
                         calendarUpdater.addReminder(it)
                     }
                 proximity = (tollRoads.map {it.lastLocationProximity()}).min()
             }
-            logger.trace { "MainService.onLocationResult(...) stopped" }
         }
     }
 
     private var proximity: TollRoad.Proximity? = null
         set(value) {
-            logger.trace { "MainService.setProximity($value) started" }
             if (field != value ) {
-                logger.info { "Proximity updated to: $value" }
                 locationCallback.updatesRequested = false
                 if (value != null) {
                     locationRequest.apply {
@@ -121,19 +100,13 @@ class MainService : Service(){
                     }
                     val locationSettingsRequest = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
                     settingsClient.checkLocationSettings(locationSettingsRequest.build())
-                    logger.debug { "locationRequest: $locationRequest" }
                     locationCallback.updatesRequested = true
                 }
                 field = value
             }
-            logger.trace { "MainService.setProximity($value) stopped" }
         }
 
     override fun onCreate() {
-        logger.trace { "MainService.onCreate() started" }
-        logger.info { "Service Started" }
-
-        logger.trace { "Notification Stuff" }
         val notificationChannel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.channel_name),
@@ -156,16 +129,11 @@ class MainService : Service(){
             setContentIntent(notificationIntent)
         }
 
-        logger.trace { "Promote to Foreground" }
         startForeground(666, notificationBuilder.build())
 
-        logger.trace { "Calender Stuff" }
         calendarUpdater.onCreate(sharedPreferences)
 
-        logger.trace { "Location Stuff" }
         proximity = TollRoad.Proximity.closeBy  // get accurate first reading
-
-        logger.trace { "MainService.onCreate() stopped" }
     }
 
     inner class MainServiceBinder: Binder() {
@@ -181,27 +149,21 @@ class MainService : Service(){
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        logger.trace { "MainService.onBind(...) called" }
         return MainServiceBinder()
     }
 
     fun onFinishRequest() {
-        logger.trace { "MainService.onFinishRequest() started" }
         stopForeground(true)
         stopSelf()
-        logger.trace { "MainService.onFinishRequest() stopped" }
     }
 
     @SuppressLint("ApplySharedPref")
     override fun onDestroy() {
-        logger.trace { "MainService.onDestroy() started" }
         proximity = null
         sharedPreferences.edit().apply {
             calendarUpdater.onDestroy(this)
             commit()
         }
-        logger.info { "Service Stopped" }
-        logger.trace { "MainService.onDestroy() stopped" }
     }
 
     companion object {

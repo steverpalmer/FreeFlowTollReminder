@@ -35,8 +35,9 @@ Therefore, I've designed the app to be *non-interactive* as far as
 possible.
 
 When run, the app may ask you for certain privileges, specifically:
- * access the device's location - need to detect toll road usage;
- * access your calendar - to generate the reminders.
+ * access the device's location - needed to detect toll road usage;
+ * access your calendar - needed to generate the reminders.
+
 Without both these privileges, the app cannot function.  Otherwise,
 the main screen allows you to select the calendar to which it will add
 reminder events.  This is the only interaction available in the app;

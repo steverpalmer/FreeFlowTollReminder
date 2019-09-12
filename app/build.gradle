@@ -5,6 +5,14 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('/home/steve/Private/keys/googleplay.jks')
+            storePassword 'R0seheath'
+            keyAlias = 'FreeFlowTollRoad'
+            keyPassword 'R0seheath'
+        }
+    }
     compileSdkVersion 29
     defaultConfig {
         applicationId "uk.me.srpalmer.freeflowtollreminder"

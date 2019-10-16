@@ -55,3 +55,15 @@ crossing the bridge at midnight, exactly which "day" did you cross?
 In such situations, the app takes a conservative approach and errs on
 the side of an early reminder rather than too late.
 
+## Privacy
+
+The App requests access to your device's Location (in order to detect
+Free Flow Toll Road crossings) and Calendar (in order to create the
+reminder). The Location information is used solely to detect Free Flow
+Toll Road usage and is immediately discarded after this use.  It is not
+stored or passed on elsewhere. Any reminders added to the Calendar will
+be subject to the normal synchronization rules for the calendar, so the
+reminder may be visible on other devices and computers.  If you want
+the information only visible on the device, then you may want to create
+a non-synchronizing calendar solely for the purpose of the "Pay Toll"
+reminders and select it in the configuration screen.
